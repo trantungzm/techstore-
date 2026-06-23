@@ -456,34 +456,7 @@ export const resolveProductImage = (product) => {
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
             return imageUrl;
         }
-        if (imageUrl.startsWith('/electro/img/')) {
-            const filename = imageUrl.split('/').pop() || '';
-            const electroFallback = {
-                'product-1.png': '/image-shop/Dien_thoai/Iphone/Iphone_15/den.webp',
-                'product-2.png': '/image-shop/Dien_thoai/Samsung/Samsung Galaxy S24 Ultra/nau.jpeg',
-                'product-3.png': '/image-shop/Camera/Canon EOS R50 Kit/may-anh-canon-eos-r50.webp',
-                'product-4.png': '/image-shop/Camera/Canon EOS R50 Kit/may-anh-canon-eos-r50.webp',
-                'product-5.png': '/picture-sp/AirPods/OIP (3).jpeg',
-                'product-6.png': '/image-shop/Dien_thoai/Iphone/Iphone_15/den.webp',
-                'product-7.png': '/image-shop/Dien_thoai/Iphone/Iphone_14_plus/den.jpg',
-                'product-8.png': '/image-shop/DongHoThongMinh/Apple Watch Series 9/gioithieu.webp',
-                'product-9.png': '/image-shop/Camera/Canon EOS R5/gioithieu.webp',
-                'product-10.png': '/picture-sp/Bose QuietComfort 45/Bose-QuietComfort-45-11-1920x1080.jpg',
-                'product-11.png': '/image-shop/Audio/JBL Flip 6/loa-bluetooth-jbl-flip-6-ksp_2.webp',
-                'product-12.png': '/image-shop/Audio/JBL PartyBox 310/jbl_partybox_310_1.webp',
-                'product-13.png': '/image-shop/Dien_thoai/Oppo/Oppo_reno_12F/den.webp',
-                'product-14.png': '/image-shop/Dien_thoai/Realme/Realme 12 Pro/dien-thoai-realme-12-pro-plus.webp',
-                'product-15.png': '/image-shop/DongHoThongMinh/Samsung Galaxy Watch 6/gioithieu.webp',
-                'product-16.png': '/image-shop/DongHoThongMinh/Garmin Venu 3/gioithieu.webp',
-                'product-17.png': '/image-shop/Camera/Sony A7IV/gioithieu.webp',
-                'product-18.png': '/image-shop/Camera/DJI Osmo Pocket 3/gioithieu.webp',
-                'product-19.png': '/picture-sp/Sony WH-1000XM5/OIP (6).jpeg',
-                'product-20.png': '/image-shop/Audio/Marshall Stanmore III/loa-bluetooth-marshall-stanmore-iii-new_4_.webp',
-                'product-21.png': '/image-shop/Audio/Soundbar Samsung Q600C/vn-q-series-soundbar-hw-q600c-hw-q600c-xv-535802674.jpg',
-            };
-
-            return electroFallback[filename] || imageUrl;
-        }
+        if (imageUrl.startsWith('/electro/img/')) return '';
         // For /uploads paths: return as relative URL.
         // In dev mode, Vite proxy forwards /uploads -> API service (port 5001).
         // In production, the API gateway serves /uploads directly.
