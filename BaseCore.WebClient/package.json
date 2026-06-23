@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^7.1.0",
+    "@fortawesome/fontawesome-free": "^5.15.4",
     "@headlessui/react": "^2.2.0",
     "@microsoft/signalr": "^9.0.0",
     "axios": "^1.13.4",
