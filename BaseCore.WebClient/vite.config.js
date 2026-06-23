@@ -33,7 +33,17 @@ export default defineConfig({
                 target: 'http://localhost:5001',
                 changeOrigin: true,
                 secure: false,
-            }
+            },
+            '/image-shop': {
+                target: 'http://localhost:5000',
+                changeOrigin: true,
+                secure: false,
+            },
+            '/picture-sp': {
+                target: 'http://localhost:5000',
+                changeOrigin: true,
+                secure: false,
+            },
         }
     }
 })
