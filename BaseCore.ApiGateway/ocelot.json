@@ -103,7 +103,7 @@
       "DownstreamPathTemplate": "/api/banners/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5001 }
+        { "Host": "localhost", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/banners/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
@@ -112,7 +112,7 @@
       "DownstreamPathTemplate": "/api/banners",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5001 }
+        { "Host": "localhost", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/banners",
       "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ]
@@ -292,7 +292,7 @@
       "DownstreamPathTemplate": "/api/settings",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5001 }
+        { "Host": "localhost", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/settings",
       "UpstreamHttpMethod": [ "GET", "PUT", "OPTIONS" ]
@@ -301,7 +301,7 @@
       "DownstreamPathTemplate": "/api/settings/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5001 }
+        { "Host": "localhost", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/settings/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]

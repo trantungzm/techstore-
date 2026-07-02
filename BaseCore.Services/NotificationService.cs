@@ -1,21 +1,48 @@
 using BaseCore.DTO.Support;
 using BaseCore.Entities;
 using BaseCore.Repository.EFCore;
+using Microsoft.Extensions.Configuration;
 
 namespace BaseCore.Services
 {
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepositoryEF _repository;
+        private readonly INotificationOutboxRepositoryEF _outboxRepository;
+        private readonly string _mode;
 
-        public NotificationService(INotificationRepositoryEF repository)
+        public NotificationService(
+            INotificationRepositoryEF repository,
+            INotificationOutboxRepositoryEF outboxRepository,
+            IConfiguration configuration)
         {
             _repository = repository;
+            _outboxRepository = outboxRepository;
+            _mode = configuration["Notifications:Mode"] ?? "DirectWrite";
         }
 
         public async Task CreateAsync(Guid? userId, string title, string message, string type, string referenceType, int? referenceId)
         {
             if (!userId.HasValue) return;
+
+            if (string.Equals(_mode, "Outbox", StringComparison.OrdinalIgnoreCase))
+            {
+                await _outboxRepository.AddAsync(new NotificationOutbox
+                {
+                    EventType = type,
+                    AggregateType = referenceType,
+                    AggregateId = referenceId?.ToString() ?? string.Empty,
+                    UserId = userId,
+                    Title = title,
+                    Message = message,
+                    PayloadJson = null,
+                    Status = "Pending",
+                    AvailableAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                });
+                return;
+            }
+
             await _repository.AddAsync(new Notification
             {
                 UserId = userId,

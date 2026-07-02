@@ -16,6 +16,24 @@ Du an TechStore gom frontend React/Vite va cac backend service xay dung tren .NE
 - Backend: ASP.NET Core, Entity Framework Core
 - Khac: SignalR, Ocelot
 
+## Lo trinh da service
+
+Du an dang duoc chuan bi cho lo trinh tach mot so module backend sang nhieu ngon ngu:
+
+- `PHP`: `Banner`, `Settings`, `Notifications admin`
+- `Rust`: `Recommendations`, `Notifications worker`
+- `.NET`: giu `Auth`, `Orders`, `Inventory`, `Products` va cac module loi
+
+Tai lieu lien quan:
+
+- `docs/architecture/multi-service-migration-plan.md`
+- `docs/architecture/notification-outbox-design.md`
+
+Khung service moi:
+
+- `services/php-admin-service`
+- `services/rust-backend-service`
+
 ## Cach chay frontend
 
 Tai thu muc `BaseCore.WebClient`:

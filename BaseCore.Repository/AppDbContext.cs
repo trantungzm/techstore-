@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using BaseCore.Entities;
 using BaseCore.Common;
 using System.Globalization;
@@ -51,6 +51,7 @@ namespace BaseCore.Repository
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<SupportTicketUpdate> SupportTicketUpdates { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationOutbox> NotificationOutboxMessages { get; set; }
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
         public DbSet<CouponScope> CouponScopes { get; set; }
@@ -794,6 +795,20 @@ namespace BaseCore.Repository
                 entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAt });
             });
 
+            modelBuilder.Entity<NotificationOutbox>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.EventType).HasMaxLength(80).IsRequired();
+                entity.Property(e => e.AggregateType).HasMaxLength(80).IsRequired();
+                entity.Property(e => e.AggregateId).HasMaxLength(80).IsRequired();
+                entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+                entity.Property(e => e.Message).HasMaxLength(1000).IsRequired();
+                entity.Property(e => e.Status).HasMaxLength(30).IsRequired();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(e => e.EventId).IsUnique();
+                entity.HasIndex(e => new { e.Status, e.AvailableAt });
+            });
+
             modelBuilder.Entity<Attachment>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -900,6 +915,7 @@ namespace BaseCore.Repository
             modelBuilder.Entity<InventoryReturn>().HasOne<User>().WithMany().HasForeignKey(e => e.ReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<InventoryTransaction>().HasOne<User>().WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<Notification>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<NotificationOutbox>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<OrderCancellation>().HasOne<User>().WithMany().HasForeignKey(e => e.RequestedByUserId).OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<OrderCancellation>().HasOne<User>().WithMany().HasForeignKey(e => e.ReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<Order>().HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.NoAction);

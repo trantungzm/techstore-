@@ -1,0 +1,17 @@
+{
+  "name": "techstore/php-admin-service",
+  "description": "PHP admin service scaffold for banners, settings and notification admin.",
+  "type": "project",
+  "require": {
+    "php": "^8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "TechStorePhpAdmin\\": "app/"
+    }
+  },
+  "scripts": {
+    "serve": "php -S localhost:5003 -t public",
+    "check": "php -l public/index.php"
+  }
+}

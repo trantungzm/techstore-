@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISupportTicketUpdateRepositoryEF, SupportTicketUpdateRepositoryEF>();
         services.AddScoped<IUserRepositoryEF, UserRepositoryEF>();
         services.AddScoped<INotificationRepositoryEF, NotificationRepositoryEF>();
+        services.AddScoped<INotificationOutboxRepositoryEF, NotificationOutboxRepositoryEF>();
         services.AddScoped<IAttachmentRepositoryEF, AttachmentRepositoryEF>();
         services.AddScoped<ICouponRepositoryEF, CouponRepositoryEF>();
         services.AddScoped<ICouponScopeRepositoryEF, CouponScopeRepositoryEF>();
