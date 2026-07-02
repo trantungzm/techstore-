@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,51 +11,43 @@ namespace BaseCore.Repository.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_ProductVariants_Sku",
-                table: "ProductVariants");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_ProductVariants_Sku'
+      AND object_id = OBJECT_ID(N'[dbo].[ProductVariants]')
+)
+BEGIN
+    DROP INDEX [IX_ProductVariants_Sku] ON [dbo].[ProductVariants];
+END
+");
 
-            migrationBuilder.DropColumn(
-                name: "ClickCount",
-                table: "Banners");
+            migrationBuilder.Sql(@"
+IF COL_LENGTH(N'[dbo].[Banners]', N'ClickCount') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [ClickCount];
+IF COL_LENGTH(N'[dbo].[Banners]', N'CreatedBy') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [CreatedBy];
+IF COL_LENGTH(N'[dbo].[Banners]', N'DeletedAt') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [DeletedAt];
+IF COL_LENGTH(N'[dbo].[Banners]', N'EndDate') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [EndDate];
+IF COL_LENGTH(N'[dbo].[Banners]', N'IsDeleted') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [IsDeleted];
+IF COL_LENGTH(N'[dbo].[Banners]', N'Position') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [Position];
+IF COL_LENGTH(N'[dbo].[Banners]', N'StartDate') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [StartDate];
+IF COL_LENGTH(N'[dbo].[Banners]', N'UpdatedBy') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [UpdatedBy];
+IF COL_LENGTH(N'[dbo].[Banners]', N'ViewCount') IS NOT NULL
+    ALTER TABLE [dbo].[Banners] DROP COLUMN [ViewCount];
+");
 
-            migrationBuilder.DropColumn(
-                name: "CreatedBy",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "DeletedAt",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "EndDate",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "IsDeleted",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "Position",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "StartDate",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "UpdatedBy",
-                table: "Banners");
-
-            migrationBuilder.DropColumn(
-                name: "ViewCount",
-                table: "Banners");
-
-            migrationBuilder.AddColumn<string>(
-                name: "BankAccountsJson",
-                table: "StoreSettings",
-                type: "nvarchar(max)",
-                nullable: true);
+            migrationBuilder.Sql(@"
+IF COL_LENGTH(N'[dbo].[StoreSettings]', N'BankAccountsJson') IS NULL
+    ALTER TABLE [dbo].[StoreSettings] ADD [BankAccountsJson] nvarchar(max) NULL;
+");
 
             migrationBuilder.AlterColumn<bool>(
                 name: "IsDefault",
@@ -77,83 +69,64 @@ namespace BaseCore.Repository.Migrations
                 oldMaxLength: 250,
                 oldNullable: true);
 
-            migrationBuilder.CreateTable(
-                name: "NotificationOutboxMessages",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EventType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    AggregateType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    AggregateId = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    PayloadJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    AvailableAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ProcessedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastError = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RetryCount = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_NotificationOutboxMessages", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_NotificationOutboxMessages_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id");
-                });
+            migrationBuilder.Sql(@"
+IF OBJECT_ID(N'[dbo].[NotificationOutboxMessages]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[NotificationOutboxMessages] (
+        [Id] bigint NOT NULL IDENTITY(1,1),
+        [EventId] uniqueidentifier NOT NULL,
+        [EventType] nvarchar(80) NOT NULL,
+        [AggregateType] nvarchar(80) NOT NULL,
+        [AggregateId] nvarchar(80) NOT NULL,
+        [UserId] uniqueidentifier NULL,
+        [Title] nvarchar(200) NOT NULL,
+        [Message] nvarchar(1000) NOT NULL,
+        [PayloadJson] nvarchar(max) NULL,
+        [Status] nvarchar(30) NOT NULL,
+        [AvailableAt] datetime2 NOT NULL,
+        [ProcessedAt] datetime2 NULL,
+        [LastError] nvarchar(max) NULL,
+        [RetryCount] int NOT NULL,
+        [CreatedAt] datetime2 NOT NULL CONSTRAINT [DF_NotificationOutboxMessages_CreatedAt] DEFAULT (GETUTCDATE()),
+        CONSTRAINT [PK_NotificationOutboxMessages] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_NotificationOutboxMessages_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id])
+    );
+END
+");
 
-            migrationBuilder.CreateTable(
-                name: "PaymentSessions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SessionId = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
-                    OrderId = table.Column<int>(type: "int", nullable: true),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OrderPayloadJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    TransactionId = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PaidAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PaymentSessions", x => x.Id);
-                });
+            migrationBuilder.Sql(@"
+IF OBJECT_ID(N'[dbo].[PaymentSessions]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[PaymentSessions] (
+        [Id] int NOT NULL IDENTITY(1,1),
+        [SessionId] nvarchar(40) NOT NULL,
+        [Token] nvarchar(64) NOT NULL,
+        [OrderId] int NULL,
+        [UserId] uniqueidentifier NULL,
+        [OrderPayloadJson] nvarchar(max) NULL,
+        [Amount] decimal(18,2) NOT NULL,
+        [Status] nvarchar(20) NOT NULL,
+        [TransactionId] nvarchar(80) NULL,
+        [ExpiresAt] datetime2 NOT NULL,
+        [PaidAt] datetime2 NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        CONSTRAINT [PK_PaymentSessions] PRIMARY KEY ([Id])
+    );
+END
+");
 
-            migrationBuilder.CreateTable(
-                name: "ProductCategories",
-                columns: table => new
-                {
-                    ProductId = table.Column<int>(type: "int", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProductCategories", x => new { x.ProductId, x.CategoryId });
-                    table.ForeignKey(
-                        name: "FK_ProductCategories_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ProductCategories_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.Sql(@"
+IF OBJECT_ID(N'[dbo].[ProductCategories]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[ProductCategories] (
+        [ProductId] int NOT NULL,
+        [CategoryId] int NOT NULL,
+        CONSTRAINT [PK_ProductCategories] PRIMARY KEY ([ProductId], [CategoryId]),
+        CONSTRAINT [FK_ProductCategories_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [dbo].[Categories] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_ProductCategories_Products_ProductId] FOREIGN KEY ([ProductId]) REFERENCES [dbo].[Products] ([Id]) ON DELETE CASCADE
+    );
+END
+");
 
             migrationBuilder.UpdateData(
                 table: "Products",
@@ -197,37 +170,20 @@ namespace BaseCore.Repository.Migrations
                 column: "BankAccountsJson",
                 value: null);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_NotificationOutboxMessages_EventId",
-                table: "NotificationOutboxMessages",
-                column: "EventId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_NotificationOutboxMessages_Status_AvailableAt",
-                table: "NotificationOutboxMessages",
-                columns: new[] { "Status", "AvailableAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_NotificationOutboxMessages_UserId",
-                table: "NotificationOutboxMessages",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PaymentSessions_OrderId",
-                table: "PaymentSessions",
-                column: "OrderId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PaymentSessions_SessionId",
-                table: "PaymentSessions",
-                column: "SessionId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductCategories_CategoryId",
-                table: "ProductCategories",
-                column: "CategoryId");
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_NotificationOutboxMessages_EventId' AND object_id = OBJECT_ID(N'[dbo].[NotificationOutboxMessages]'))
+    CREATE UNIQUE INDEX [IX_NotificationOutboxMessages_EventId] ON [dbo].[NotificationOutboxMessages] ([EventId]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_NotificationOutboxMessages_Status_AvailableAt' AND object_id = OBJECT_ID(N'[dbo].[NotificationOutboxMessages]'))
+    CREATE INDEX [IX_NotificationOutboxMessages_Status_AvailableAt] ON [dbo].[NotificationOutboxMessages] ([Status], [AvailableAt]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_NotificationOutboxMessages_UserId' AND object_id = OBJECT_ID(N'[dbo].[NotificationOutboxMessages]'))
+    CREATE INDEX [IX_NotificationOutboxMessages_UserId] ON [dbo].[NotificationOutboxMessages] ([UserId]);
+IF OBJECT_ID(N'[dbo].[PaymentSessions]', N'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PaymentSessions_OrderId' AND object_id = OBJECT_ID(N'[dbo].[PaymentSessions]'))
+    CREATE INDEX [IX_PaymentSessions_OrderId] ON [dbo].[PaymentSessions] ([OrderId]);
+IF OBJECT_ID(N'[dbo].[PaymentSessions]', N'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PaymentSessions_SessionId' AND object_id = OBJECT_ID(N'[dbo].[PaymentSessions]'))
+    CREATE UNIQUE INDEX [IX_PaymentSessions_SessionId] ON [dbo].[PaymentSessions] ([SessionId]);
+IF OBJECT_ID(N'[dbo].[ProductCategories]', N'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ProductCategories_CategoryId' AND object_id = OBJECT_ID(N'[dbo].[ProductCategories]'))
+    CREATE INDEX [IX_ProductCategories_CategoryId] ON [dbo].[ProductCategories] ([CategoryId]);
+");
         }
 
         /// <inheritdoc />

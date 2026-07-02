@@ -2,55 +2,28 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/utils.php';
-require_once __DIR__ . '/../src/db.php';
-require_once __DIR__ . '/../src/auth.php';
-require_once __DIR__ . '/../src/validators.php';
+require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../validators.php';
 
-loadEnv(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env');
-
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: Authorization, Content-Type');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-
-$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
-$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-
-if ($method === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-try {
-    route($method, $path);
-} catch (Throwable $exception) {
-    jsonResponse(
-        [
-            'message' => $exception->getMessage(),
-        ],
-        $exception->getCode() >= 400 && $exception->getCode() < 600 ? $exception->getCode() : 500
-    );
-}
-
-function route(string $method, string $path): void
+function handleBanners(string $method, string $path): void
 {
-    require_once __DIR__ . '/../src/modules/banners.php';
-    require_once __DIR__ . '/../src/modules/settings.php';
-    require_once __DIR__ . '/../src/modules/notifications.php';
-
-    if ($path === '/health') {
-        jsonResponse([
-            'service' => 'tech-php-admin-service',
-            'status' => 'ok',
-            'modules' => ['banners', 'settings', 'notifications-admin'],
-            'databaseDriver' => envValue('DB_CONNECTION', 'sqlsrv'),
-            'availablePdoDrivers' => class_exists(PDO::class) ? PDO::getAvailableDrivers() : [],
-        ]);
+    if ($path === '/api/banners/active' && $method === 'GET') {
+        jsonResponse(fetchAll(
+            'SELECT Id, Kicker, Title, SubTitle, CtaLabel, CtaTo, ImageUrl, OfferTitle, OfferDiscount, OfferProduct, DisplayOrder, IsActive, CreatedAt, UpdatedAt
+             FROM Banners
+             WHERE IsActive = 1
+             ORDER BY DisplayOrder, Id'
+        ));
     }
 
-    // Delegate banner routes
-    handleBanners($method, $path);
+    if ($path === '/api/banners' && $method === 'GET') {
+        requireAdmin();
+        jsonResponse(fetchAll(
+            'SELECT Id, Kicker, Title, SubTitle, CtaLabel, CtaTo, ImageUrl, OfferTitle, OfferDiscount, OfferProduct, DisplayOrder, IsActive, CreatedAt, UpdatedAt
+             FROM Banners
+             ORDER BY DisplayOrder, Id'
+        ));
+    }
 
     if ($path === '/api/banners' && $method === 'POST') {
         requireAdmin();
@@ -163,16 +136,4 @@ function route(string $method, string $path): void
         ]);
         jsonResponse(fetchBannerById($id));
     }
-
-    // Delegate settings routes
-    handleSettings($method, $path);
-
-    // Delegate notification routes
-    handleNotifications($method, $path);
-
-    jsonResponse([
-        'message' => 'Route not found',
-        'method' => $method,
-        'path' => $path,
-    ], 404);
 }

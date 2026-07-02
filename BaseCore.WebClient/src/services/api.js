@@ -85,6 +85,62 @@ const pickFirstPositiveNumber = (...values) => {
     return 0;
 };
 
+const normalizeBannerShape = (banner) => {
+    if (!banner || typeof banner !== 'object' || Array.isArray(banner)) return banner;
+
+    const id = banner.id ?? banner.Id ?? null;
+    const displayOrder = Number(banner.displayOrder ?? banner.DisplayOrder ?? 0);
+    const isActiveValue = banner.isActive ?? banner.IsActive;
+    const isActive = isActiveValue === true || isActiveValue === 1 || isActiveValue === '1' || isActiveValue === 'true';
+
+    return {
+        ...banner,
+        id,
+        kicker: banner.kicker ?? banner.Kicker ?? '',
+        title: banner.title ?? banner.Title ?? '',
+        subTitle: banner.subTitle ?? banner.SubTitle ?? '',
+        ctaLabel: banner.ctaLabel ?? banner.CtaLabel ?? '',
+        ctaTo: banner.ctaTo ?? banner.CtaTo ?? '',
+        imageUrl: banner.imageUrl ?? banner.ImageUrl ?? '',
+        offerTitle: banner.offerTitle ?? banner.OfferTitle ?? '',
+        offerDiscount: banner.offerDiscount ?? banner.OfferDiscount ?? '',
+        offerProduct: banner.offerProduct ?? banner.OfferProduct ?? '',
+        displayOrder,
+        isActive,
+    };
+};
+
+const normalizeBannerResponse = (response) => {
+    const data = response?.data;
+
+    if (Array.isArray(data)) {
+        return { ...response, data: data.map(normalizeBannerShape) };
+    }
+
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+        const payload = data.items || data.Items || data.data || data.Data || data;
+
+        if (Array.isArray(payload)) {
+            return {
+                ...response,
+                data: {
+                    ...data,
+                    items: payload.map(normalizeBannerShape),
+                },
+            };
+        }
+
+        if (payload && typeof payload === 'object' && !Array.isArray(payload) && ('id' in payload || 'Id' in payload)) {
+            return {
+                ...response,
+                data: normalizeBannerShape(payload),
+            };
+        }
+    }
+
+    return response;
+};
+
 const countActiveVariants = (variants = []) => (
     Array.isArray(variants)
         ? variants.filter((variant) => variant?.isActive !== false && variant?.IsActive !== false).length
@@ -364,9 +420,9 @@ export const recommendationApi = {
 };
 
 export const bannerApi = {
-    getActive: (position = 1) => api.get('/banners/active', { params: { position } }),
-    getAll: (params = {}) => api.get('/banners', { params }),
-    getById: (id) => api.get(`/banners/${id}`),
+    getActive: (position = 1) => api.get('/banners/active', { params: { position } }).then(normalizeBannerResponse),
+    getAll: (params = {}) => api.get('/banners', { params }).then(normalizeBannerResponse),
+    getById: (id) => api.get(`/banners/${id}`).then(normalizeBannerResponse),
     create: (data) => api.post('/banners', data),
     update: (id, data) => api.put(`/banners/${id}`, data),
     delete: (id) => api.delete(`/banners/${id}`),

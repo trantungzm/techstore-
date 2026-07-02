@@ -163,18 +163,27 @@ const Home = () => {
                 setBestsellerProducts(bestSellers);
 
                 const bannersData = bannersResponse?.data;
+                const bannerItems = Array.isArray(bannersData)
+                    ? bannersData
+                    : Array.isArray(bannersData?.items || bannersData?.Items)
+                        ? (bannersData.items || bannersData.Items)
+                        : [];
 
-                if (Array.isArray(bannersData) && bannersData.length > 0) {
-                    const formattedBanners = bannersData.map((b) => ({
-                        kicker: b.kicker,
-                        title: <>{b.title}</>,
-                        sub: b.subTitle,
-                        cta: { label: b.ctaLabel, to: b.ctaTo },
-                        image: b.imageUrl,
-                        offerTitle: b.offerTitle,
-                        offerDiscount: b.offerDiscount,
-                        offerProduct: b.offerProduct,
-                    }));
+                if (bannerItems.length > 0) {
+                    const formattedBanners = bannerItems.map((banner, index) => {
+                        const normalizedBanner = banner && typeof banner === 'object' ? banner : {};
+                        return {
+                            id: normalizedBanner.id ?? normalizedBanner.Id ?? `banner-${index}`,
+                            kicker: normalizedBanner.kicker ?? normalizedBanner.Kicker ?? '',
+                            title: <>{normalizedBanner.title ?? normalizedBanner.Title ?? ''}</>,
+                            sub: normalizedBanner.subTitle ?? normalizedBanner.SubTitle ?? '',
+                            cta: { label: normalizedBanner.ctaLabel ?? normalizedBanner.CtaLabel ?? '', to: normalizedBanner.ctaTo ?? normalizedBanner.CtaTo ?? '/' },
+                            image: normalizedBanner.imageUrl ?? normalizedBanner.ImageUrl ?? '',
+                            offerTitle: normalizedBanner.offerTitle ?? normalizedBanner.OfferTitle ?? '',
+                            offerDiscount: normalizedBanner.offerDiscount ?? normalizedBanner.OfferDiscount ?? '',
+                            offerProduct: normalizedBanner.offerProduct ?? normalizedBanner.OfferProduct ?? '',
+                        };
+                    });
                     setHeroSlides(formattedBanners);
                 } else {
                     setHeroSlides([]);
@@ -260,9 +269,9 @@ const Home = () => {
                             transition={{ delay: 0.6, duration: 0.5 }}
                             className="mt-10 flex items-center gap-3"
                         >
-                            {heroSlides.map((_, i) => (
+                            {heroSlides.map((slide, i) => (
                                 <button
-                                    key={i}
+                                    key={slide.id ?? `hero-dot-${i}`}
                                     type="button"
                                     onClick={() => handleHeroDotClick(i)}
                                     aria-label={`Slide ${i + 1}`}

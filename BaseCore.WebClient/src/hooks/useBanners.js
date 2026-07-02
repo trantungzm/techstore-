@@ -11,7 +11,13 @@ export function useBanners() {
         try {
             setLoading(true);
             const response = await bannerApi.getAll();
-            setBanners(response.data || []);
+            const payload = response?.data;
+            const items = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.items || payload?.Items)
+                    ? (payload.items || payload.Items)
+                    : [];
+            setBanners(items);
         } catch (err) {
             setError('Không tải được danh sách banner');
             console.error(err);

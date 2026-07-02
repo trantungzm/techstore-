@@ -29,6 +29,30 @@ const AdminBanners = () => {
     const [imageFile, setImageFile] = useState(null);
     const [showForm, setShowForm] = useState(false);
 
+    const normalizeBanner = (rawBanner) => {
+        const banner = rawBanner && typeof rawBanner === 'object' ? rawBanner : {};
+        const id = banner.id ?? banner.Id;
+        const displayOrder = Number(banner.displayOrder ?? banner.DisplayOrder ?? 0);
+        const isActiveValue = banner.isActive ?? banner.IsActive;
+        const isActive = isActiveValue === true || isActiveValue === 1 || isActiveValue === '1' || isActiveValue === 'true';
+
+        return {
+            ...banner,
+            id,
+            kicker: banner.kicker ?? banner.Kicker ?? '',
+            title: banner.title ?? banner.Title ?? '',
+            subTitle: banner.subTitle ?? banner.SubTitle ?? '',
+            ctaLabel: banner.ctaLabel ?? banner.CtaLabel ?? '',
+            ctaTo: banner.ctaTo ?? banner.CtaTo ?? '',
+            imageUrl: banner.imageUrl ?? banner.ImageUrl ?? '',
+            offerTitle: banner.offerTitle ?? banner.OfferTitle ?? '',
+            offerDiscount: banner.offerDiscount ?? banner.OfferDiscount ?? '',
+            offerProduct: banner.offerProduct ?? banner.OfferProduct ?? '',
+            displayOrder,
+            isActive,
+        };
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -74,20 +98,21 @@ const AdminBanners = () => {
     };
 
     const handleEdit = (banner) => {
+        const normalized = normalizeBanner(banner);
         setForm({
-            kicker: banner.kicker || '',
-            title: banner.title || '',
-            subTitle: banner.subTitle || '',
-            ctaLabel: banner.ctaLabel || '',
-            ctaTo: banner.ctaTo || '',
-            imageUrl: banner.imageUrl || '',
-            offerTitle: banner.offerTitle || '',
-            offerDiscount: banner.offerDiscount || '',
-            offerProduct: banner.offerProduct || '',
-            displayOrder: banner.displayOrder || 0,
-            isActive: banner.isActive !== undefined ? banner.isActive : true,
+            kicker: normalized.kicker || '',
+            title: normalized.title || '',
+            subTitle: normalized.subTitle || '',
+            ctaLabel: normalized.ctaLabel || '',
+            ctaTo: normalized.ctaTo || '',
+            imageUrl: normalized.imageUrl || '',
+            offerTitle: normalized.offerTitle || '',
+            offerDiscount: normalized.offerDiscount || '',
+            offerProduct: normalized.offerProduct || '',
+            displayOrder: normalized.displayOrder || 0,
+            isActive: normalized.isActive !== undefined ? normalized.isActive : true,
         });
-        setEditingId(banner.id);
+        setEditingId(normalized.id);
         setImageFile(null);
         setError('');
         setSuccess('');
@@ -377,10 +402,18 @@ const AdminBanners = () => {
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {banners
                         .slice()
-                        .sort((a, b) => a.displayOrder - b.displayOrder)
-                        .map((banner) => (
+                        .sort((a, b) => {
+                            const orderA = Number(a?.displayOrder ?? a?.DisplayOrder ?? 0);
+                            const orderB = Number(b?.displayOrder ?? b?.DisplayOrder ?? 0);
+                            return orderA - orderB;
+                        })
+                        .map((rawBanner) => {
+                            const banner = normalizeBanner(rawBanner);
+                            const bannerKey = banner.id ?? `${banner.title}-${banner.displayOrder}-${banner.imageUrl}`;
+
+                            return (
                             <div
-                                key={banner.id}
+                                key={bannerKey}
                                 className={`group flex flex-col overflow-hidden rounded-2xl border bg-[var(--color-surface)] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
                                     banner.isActive ? 'border-[var(--color-border)]' : 'border-[var(--color-border)] opacity-75'
                                 }`}
@@ -389,7 +422,7 @@ const AdminBanners = () => {
                                 <div className="relative aspect-[16/7] overflow-hidden bg-gradient-to-br from-[var(--color-surface-2)] to-[var(--color-surface-3)]">
                                     {banner.imageUrl ? (
                                         <img
-                                            src={resolveProductImage({ imageUrl: banner.imageUrl, id: banner.id })}
+                                            src={resolveProductImage({ imageUrl: banner.imageUrl, id: banner.id || 1 })}
                                             alt={banner.title || 'Banner'}
                                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         />
@@ -471,7 +504,8 @@ const AdminBanners = () => {
                                     </button>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                 </div>
             )}
         </div>
