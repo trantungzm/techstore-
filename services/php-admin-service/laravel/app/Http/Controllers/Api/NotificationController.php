@@ -112,28 +112,41 @@ class NotificationController extends BaseController
             return response()->json(['message' => 'Template not found or inactive'], 400);
         }
 
-        $now = gmdate('Y-m-d H:i:s');
-        $campaignId = DB::table('NotificationCampaigns')->insertGetId([
-            'Name' => $payload['name'] ?? '',
-            'TemplateId' => (int)($payload['templateId'] ?? 0),
-            'PayloadJson' => isset($payload['payload']) ? json_encode($payload['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
-            'Audience' => $payload['audience'] ?? 'SingleUser',
-            'Status' => 'Created',
-            'CreatedAt' => $now,
-        ]);
+        if (($payload['audience'] ?? 'SingleUser') === 'SingleUser' && empty($payload['userId'])) {
+            return response()->json(['message' => 'userId is required for SingleUser audience'], 400);
+        }
 
-        DB::table('NotificationJobs')->insert([
-            'CampaignId' => $campaignId,
-            'TemplateId' => (int)($payload['templateId'] ?? 0),
-            'UserId' => $payload['userId'] ?? null,
-            'Title' => $payload['title'] ?? $template->TitleTemplate,
-            'Message' => $payload['message'] ?? $template->BodyTemplate,
-            'PayloadJson' => isset($payload['payload']) ? json_encode($payload['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
-            'Status' => 'Pending',
-            'RetryCount' => 0,
-            'AvailableAt' => $now,
-            'CreatedAt' => $now,
-        ]);
+        $now = gmdate('Y-m-d H:i:s');
+
+        try {
+            $campaignId = DB::transaction(function () use ($payload, $template, $now) {
+                $campaignId = DB::table('NotificationCampaigns')->insertGetId([
+                    'Name' => $payload['name'] ?? '',
+                    'TemplateId' => (int)($payload['templateId'] ?? 0),
+                    'PayloadJson' => isset($payload['payload']) ? json_encode($payload['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+                    'Audience' => $payload['audience'] ?? 'SingleUser',
+                    'Status' => 'Created',
+                    'CreatedAt' => $now,
+                ]);
+
+                DB::table('NotificationJobs')->insert([
+                    'CampaignId' => $campaignId,
+                    'TemplateId' => (int)($payload['templateId'] ?? 0),
+                    'UserId' => $payload['userId'] ?? null,
+                    'Title' => $payload['title'] ?? $template->TitleTemplate,
+                    'Message' => $payload['message'] ?? $template->BodyTemplate,
+                    'PayloadJson' => isset($payload['payload']) ? json_encode($payload['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+                    'Status' => 'Pending',
+                    'RetryCount' => 0,
+                    'AvailableAt' => $now,
+                    'CreatedAt' => $now,
+                ]);
+
+                return $campaignId;
+            });
+        } catch (\Illuminate\Database\QueryException) {
+            return response()->json(['message' => 'Could not create campaign: invalid userId or data'], 400);
+        }
 
         return response()->json(['id' => $campaignId, 'status' => 'Created'], 201);
     }
