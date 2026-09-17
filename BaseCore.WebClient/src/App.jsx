@@ -22,6 +22,7 @@ import AdminInventory from './pages/admin/AdminInventory';
 import AdminRepairs from './pages/admin/AdminRepairs';
 import AdminTickets from './pages/admin/AdminTickets';
 import AdminWarranty from './pages/admin/AdminWarranty';
+import AdminNotifications from './pages/admin/AdminNotifications';
 import Roles from './pages/admin/Roles';
 import StoreLayout from './layout/StoreLayout';
 import ScrollToTop from './components/store/ScrollToTop';
@@ -204,6 +205,16 @@ function AppRoutes() {
                     <ProtectedRoute allowedRoles={['Admin']}>
                         <MainLayout>
                             <AdminBanners />
+                        </MainLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/notifications"
+                element={
+                    <ProtectedRoute allowedRoles={['Admin']}>
+                        <MainLayout>
+                            <AdminNotifications />
                         </MainLayout>
                     </ProtectedRoute>
                 }

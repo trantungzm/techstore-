@@ -397,6 +397,7 @@ const navGroups = [
             { to: '/admin/suppliers', label: 'Nhà cung cấp', icon: 'fas fa-truck' },
             { to: '/admin/coupons', label: 'Phiếu giảm giá', icon: 'fas fa-ticket-alt' },
             { to: '/admin/banners', label: 'Banner trang chủ', icon: 'fas fa-images' },
+            { to: '/admin/notifications', label: 'Thông báo admin', icon: 'fas fa-bell' },
         ],
     },
     {

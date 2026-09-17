@@ -6,7 +6,7 @@ const API_BASE_URL = '/api';
 const api = axios.create({
     baseURL: API_BASE_URL,
 });
-
+//Chặn Request trước khi gửi.
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -37,12 +37,12 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
+//chuẩn hóa dữ liệu phân trang
 const unwrapPagedItems = (payload) => {
     if (Array.isArray(payload)) return payload;
     return payload?.items || payload?.Items || payload?.data || payload?.Data || [];
 };
-
+//Chuẩn hóa dữ liệu Login
 const normalizeLoginResponse = (response) => {
     const data = response.data || {};
     return {
@@ -64,9 +64,10 @@ const multipart = (files, fieldName) => {
     Array.from(files || []).forEach((file) => form.append(fieldName, file));
     return form;
 };
-
+// 
 const withItems = (request) => request.then((res) => ({ ...res, data: unwrapPagedItems(res.data) }));
 
+// Lấy giá trị số đầu tiên hợp lệ từ danh sách, bỏ qua null/undefined/empty string. Trả về 0 nếu không có giá trị hợp lệ.
 const pickFirstNumber = (...values) => {
     for (const value of values) {
         if (value === null || value === undefined || value === '') continue;
@@ -76,6 +77,7 @@ const pickFirstNumber = (...values) => {
     return 0;
 };
 
+// Lấy giá trị số dương đầu tiên hợp lệ từ danh sách, bỏ qua null/undefined/empty string. Trả về 0 nếu không có giá trị hợp lệ.
 const pickFirstPositiveNumber = (...values) => {
     for (const value of values) {
         if (value === null || value === undefined || value === '') continue;
@@ -85,6 +87,7 @@ const pickFirstPositiveNumber = (...values) => {
     return 0;
 };
 
+// Chuẩn hóa dữ liệu banner, sản phẩm, biến thể, v.v. từ API để đảm bảo có các trường cần thiết và giá trị hợp lệ.
 const normalizeBannerShape = (banner) => {
     if (!banner || typeof banner !== 'object' || Array.isArray(banner)) return banner;
 
@@ -109,7 +112,7 @@ const normalizeBannerShape = (banner) => {
         isActive,
     };
 };
-
+// Chuẩn hóa dữ liệu phản hồi từ API banner, đảm bảo có các trường cần thiết và giá trị hợp lệ.
 const normalizeBannerResponse = (response) => {
     const data = response?.data;
 
@@ -140,13 +143,13 @@ const normalizeBannerResponse = (response) => {
 
     return response;
 };
-
+// Đếm số lượng biến thể đang hoạt động
 const countActiveVariants = (variants = []) => (
     Array.isArray(variants)
         ? variants.filter((variant) => variant?.isActive !== false && variant?.IsActive !== false).length
         : 0
 );
-
+// Chuẩn hóa dữ liệu biến thể, đảm bảo có các trường cần thiết và giá trị hợp lệ.
 const normalizeVariantShape = (variant, fallbackPrice = 0) => {
     if (!variant || typeof variant !== 'object' || Array.isArray(variant)) return variant;
     const price = pickFirstPositiveNumber(variant.price, variant.basePrice, fallbackPrice);
@@ -159,6 +162,7 @@ const normalizeVariantShape = (variant, fallbackPrice = 0) => {
     };
 };
 
+// Chuẩn hóa dữ liệu sản phẩm, đảm bảo có các trường cần thiết và giá trị hợp lệ.
 const normalizeProductShape = (product) => {
     if (!product || typeof product !== 'object' || Array.isArray(product)) return product;
 
@@ -188,7 +192,7 @@ const normalizeProductShape = (product) => {
             : product.variants,
     };
 };
-
+// Chuẩn hóa dữ liệu phản hồi từ API sản phẩm, đảm bảo có các trường cần thiết và giá trị hợp lệ.
 const normalizeProductResponse = (response) => {
     const data = response?.data;
     if (Array.isArray(data?.items)) {
@@ -211,11 +215,14 @@ const normalizeProductResponse = (response) => {
     return response;
 };
 
+
 export const authApi = {
+    // Đăng nhập và đăng ký người dùng
     login: (username, password) => api.post('/auth/login', { username, password }).then(normalizeLoginResponse),
     register: (data) => api.post('/auth/register', data).then((response) => {
         const payload = response.data || {};
         return {
+            // Chuẩn hóa dữ liệu phản hồi từ API đăng ký, đảm bảo có các trường cần thiết và giá trị hợp lệ.
             data: {
                 message: payload.message || payload.Message,
                 userId: payload.userId || payload.UserId,
@@ -223,7 +230,7 @@ export const authApi = {
         };
     }),
 };
-
+// API cho quản lý người dùng
 export const userApi = {
     getAll: (params = {}) => api.get('/users', { params }),
     getById: (id) => api.get(`/users/${id}`),
@@ -232,7 +239,7 @@ export const userApi = {
     updateRole: (id, data) => api.put(`/users/${id}/role`, data),
     delete: (id) => api.delete(`/users/${id}`),
 };
-
+// API cho quản lý vai trò
 export const roleApi = {
     getAll: () => api.get('/roles'),
     getById: (id) => api.get(`/roles/${id}`),
@@ -240,13 +247,13 @@ export const roleApi = {
     update: (id, data) => api.put(`/roles/${id}`, data),
     delete: (id) => api.delete(`/roles/${id}`),
 };
-
+// API cho quản lý quyền
 export const settingsApi = {
     get: () => api.get('/settings'),
     update: (data) => api.put('/settings', data),
     getPickupBranches: () => api.get('/settings/pickup-branches'),
 };
-
+//  API cho quản lý phiếu giảm giá
 export const couponApi = {
     getAll: (params = {}) => api.get('/coupons', { params }),
     getById: (id) => api.get(`/coupons/${id}`),
@@ -264,12 +271,12 @@ export const couponApi = {
     applyPreview: (data) => api.post('/coupons/apply-preview', data),
     spin: () => api.post('/coupons/spin'),
 };
-
+// API cho quản lý phiếu quà tặng
 export const uploadApi = {
     uploadProductImages: (files) => api.post('/uploads/product-images', multipart(files, 'files')),
     uploadTicketAttachments: (files) => api.post('/uploads/ticket-attachments', multipart(files, 'files')),
 };
-
+//
 export const productApi = {
     getAllRemote: (params = {}) => api.get('/products', { params }).then(normalizeProductResponse),
     getAll: (params = {}) => api.get('/products', { params }).then(normalizeProductResponse),
@@ -282,7 +289,7 @@ export const productApi = {
     delete: (id) => api.delete(`/products/${id}`),
     getLocalCatalog: () => [],
 };
-
+// API cho quản lý danh mục
 export const categoryApi = {
     getAll: () => api.get('/categories'),
     getById: (id) => api.get(`/categories/${id}`),
@@ -290,11 +297,11 @@ export const categoryApi = {
     update: (id, data) => api.put(`/categories/${id}`, data),
     delete: (id) => api.delete(`/categories/${id}`),
 };
-
+// API cho quản lý thương hiệu
 export const brandApi = {
     getByCategory: (categoryId) => api.get('/brands', { params: categoryId ? { categoryId } : {} }),
 };
-
+// API cho quản lý đơn hàng
 export const orderApi = {
     create: (data) => api.post('/orders', data),
     getMyOrders: () => api.get('/orders/my'),
@@ -304,7 +311,7 @@ export const orderApi = {
     cancel: (id, data) => api.put(`/orders/${id}/cancel`, data),
     reviewCancellation: (id, data) => api.put(`/orders/${id}/cancellation-review`, data),
 };
-
+//  API cho quản lý sản phẩm, biến thể, thuộc tính, v.v.
 export const specApi = {
     getDefinitions: (categoryId) => api.get('/specs/definitions', { params: { categoryId } }),
     createDefinition: (data) => api.post('/specs/definitions', data),
@@ -316,7 +323,7 @@ export const specApi = {
     getProductSpecs: (productId) => api.get(`/specs/products/${productId}`),
     updateProductSpecs: (productId, values = []) => api.put(`/specs/products/${productId}`, values),
 };
-
+// API cho quản lý bảo hành, khiếu nại, v.v.
 export const warrantyApi = {
     lookup: (paramsOrSerial) => {
         if (typeof paramsOrSerial === 'string') {
@@ -335,7 +342,7 @@ export const warrantyApi = {
     updateClaimStatus: (id, data) => api.put(`/warranty/claims/${id}/status`, data),
     getClaimUpdates: (id) => api.get(`/warranty/claims/${id}/updates`),
 };
-
+// API cho quản lý thông báo, ticket, sửa chữa, v.v.
 export const notificationApi = {
     getMy: (params = {}) => api.get('/notifications/my', { params }),
     getUnreadCount: () => api.get('/notifications/my/unread-count'),
@@ -343,6 +350,16 @@ export const notificationApi = {
     markAllRead: () => api.put('/notifications/my/read-all'),
 };
 
+export const notificationAdminApi = {
+    getTemplates: () => api.get('/admin/notification-templates'),
+    createTemplate: (data) => api.post('/admin/notification-templates', data),
+    updateTemplate: (id, data) => api.put(`/admin/notification-templates/${id}`, data),
+    deleteTemplate: (id) => api.delete(`/admin/notification-templates/${id}`),
+    getCampaigns: () => api.get('/admin/notifications/campaigns'),
+    createCampaign: (data) => api.post('/admin/notifications/campaigns', data),
+};
+
+// API cho quản lý ticket, sửa chữa, v.v.
 export const ticketApi = {
     getMy: () => api.get('/tickets/my'),
     getAll: (params = {}) => withItems(api.get('/tickets/all', { params })),
@@ -350,7 +367,7 @@ export const ticketApi = {
     create: (data) => api.post('/tickets', data),
     addUpdate: (id, data) => api.post(`/tickets/${id}/updates`, data),
 };
-
+// API cho quản lý sửa chữa, bảo hành, v.v.
 export const repairApi = {
     getAll: (params = {}) => withItems(api.get('/repairs', { params })),
     getMy: (params = {}) => withItems(api.get('/repairs/my', { params })),
@@ -367,18 +384,18 @@ export const repairApi = {
         return api.put(`/repairs/${id}`, data);
     },
 };
-
+// API cho quản lý đối tác, thanh toán, v.v.
 export const financeApi = {
     getPartners: () => api.get('/finance/partners'),
 };
-
+// API cho quản lý thanh toán, v.v.
 export const paymentApi = {
     createSession: (orderId, amount) => api.post('/payments/sessions', { orderId, amount }),
     createPendingSession: (orderPayload, amount) => api.post('/payments/sessions', { orderPayload, amount }),
     getStatus: (sessionId) => api.get(`/payments/${sessionId}/status`),
     getDetail: (sessionId) => api.get(`/payments/${sessionId}/detail`),
 };
-
+// API cho quản lý kho, nhập xuất tồn, nhà cung cấp, v.v.
 export const inventoryApi = {
     createReceipt: (data) => api.post('/inventory/receipts', data),
     getSuppliers: (params = {}) => withItems(api.get('/suppliers', { params })),
@@ -399,7 +416,7 @@ export const inventoryApi = {
         note: data?.note || null,
     }),
 };
-
+// API cho quản lý nhà cung cấp, danh mục nhà cung cấp, v.v.
 export const supplierApi = {
     getAll: (params = {}) => withItems(api.get('/suppliers', { params })),
     create: (data) => api.post('/suppliers', data),
@@ -407,18 +424,19 @@ export const supplierApi = {
     delete: (id) => api.delete(`/suppliers/${id}`),
     toggleActive: (id) => api.put(`/suppliers/${id}/toggle-active`),
 };
-
+// API cho quản lý danh mục nhà cung cấp
 export const categorySupplierApi = {
     getAll: () => api.get('/category-suppliers'),
     getByCategory: (categoryId) => api.get(`/category-suppliers/category/${categoryId}`),
 };
 
+// API cho quản lý gợi ý sản phẩm
 export const recommendationApi = {
     getCrossSell: (productId, maxItems = 6) => api.get('/recommendations/cross-sell', { params: { productId, maxItems } }),
     getAutoCrossSell: (productId, maxItems = 6) => api.get('/recommendations/auto-cross-sell', { params: { productId, maxItems } }),
     setCrossSell: (productId, productIds = []) => api.put('/recommendations/cross-sell', { productIds }, { params: { productId } }),
 };
-
+// API cho quản lý banner, quảng cáo, v.v.
 export const bannerApi = {
     getActive: (position = 1) => api.get('/banners/active', { params: { position } }).then(normalizeBannerResponse),
     getAll: (params = {}) => api.get('/banners', { params }).then(normalizeBannerResponse),
