@@ -28,10 +28,21 @@ BaseCore.ApiGateway
 | --- | --- | --- |
 | Banner | PHP | `Banners` |
 | Settings | PHP | `StoreSettings` |
-| Notifications admin | PHP | `NotificationTemplates`, `NotificationCampaigns`, `NotificationJobs` |
+| Notifications admin | PHP (ghi) | `NotificationTemplates`, `NotificationCampaigns`, `NotificationJobs` |
 | Recommendations | Rust | `ProductRecommendations` |
 | Notifications worker | Rust | `NotificationOutbox`, `Notifications` |
 | Notifications user-facing API | .NET giai doan dau | `Notifications` doc/mark-read/delete |
+
+**Ghi chu ve `NotificationTemplates` / `NotificationCampaigns` / `NotificationJobs`:**
+
+- PHP admin service la noi duy nhat duoc ghi (insert/update/delete) 3 bang nay —
+  quan ly qua `NotificationController` (`templates`, `createTemplate`,
+  `updateTemplate`, `deleteTemplate`, `campaigns`, `createCampaign`).
+- `Rust worker` (giai doan sau, xem "Giai doan 5" ben duoi) chi **doc**
+  `NotificationTemplates` (de lay noi dung) va `NotificationJobs` (de lay job
+  `Pending` can xu ly), sau do cap nhat `Status`/`ProcessedAt`/`LastError` cua
+  tung job da xu ly. Worker khong duoc tao/sua/xoa `NotificationTemplates`
+  hay `NotificationCampaigns` — do la nghiep vu cua PHP admin service.
 
 ## Mapping endpoint
 
