@@ -19,6 +19,11 @@ use App\Http\Middleware\JwtMiddleware;
 
 Route::get('/banners/active', [BannerController::class, 'active']);
 
+// Public read per docs/architecture/multi-service-migration-plan.md — storefront
+// needs these without a JWT (e.g. store name/hotline, pickup branch list).
+Route::get('/settings', [SettingsController::class, 'get']);
+Route::get('/settings/pickup-branches', [SettingsController::class, 'pickupBranches']);
+
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::get('/banners', [BannerController::class, 'index']);
     Route::post('/banners', [BannerController::class, 'store']);
@@ -27,9 +32,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
     Route::put('/banners/{id}/toggle', [BannerController::class, 'toggle']);
 
-    Route::get('/settings', [SettingsController::class, 'get']);
     Route::put('/settings', [SettingsController::class, 'update']);
-    Route::get('/settings/pickup-branches', [SettingsController::class, 'pickupBranches']);
 
     Route::get('/admin/notification-templates', [NotificationController::class, 'templates']);
     Route::post('/admin/notification-templates', [NotificationController::class, 'createTemplate']);
