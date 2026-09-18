@@ -11,6 +11,16 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// JWT signing secret must never be hardcoded in appsettings.json (it was, and got committed to git
+// history — see security audit). Read it from the JWT_SECRET env var (or dotnet user-secrets in dev),
+// overriding whatever appsettings has. If neither is set, AddJwtAuth's Jwt:SecretKey null-check fails
+// startup loudly instead of running with no/empty signing key.
+var jwtSecretFromEnv = Environment.GetEnvironmentVariable("JWT_SECRET");
+if (!string.IsNullOrWhiteSpace(jwtSecretFromEnv))
+{
+    builder.Configuration["Jwt:SecretKey"] = jwtSecretFromEnv;
+}
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
