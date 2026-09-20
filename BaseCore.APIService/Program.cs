@@ -84,7 +84,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("CorsPolicy");
-app.UseStaticFiles();
+// Uploaded files (product images, ticket attachments) are served from here — nosniff stops
+// browsers from executing a mislabeled upload (e.g. an HTML/SVG payload) as its sniffed type.
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    }
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
