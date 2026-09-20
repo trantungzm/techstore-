@@ -51,18 +51,30 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddEndpointsApiExplorer();
 
+// Origin whitelist comes from Cors:WithOrigin (comma-separated). In dev, an unset value falls
+// back to the Vite dev server origin; outside dev, an unset/empty value fails startup instead
+// of silently allowing every origin.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        var origin = builder.Configuration["Cors:WithOrigin"];
-        if (builder.Environment.IsDevelopment() || string.IsNullOrWhiteSpace(origin))
+        var originsConfig = builder.Configuration["Cors:WithOrigin"];
+        if (builder.Environment.IsDevelopment())
         {
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            var devOrigins = string.IsNullOrWhiteSpace(originsConfig)
+                ? new[] { "http://localhost:3000", "http://localhost:5000" }
+                : originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            policy.WithOrigins(devOrigins).AllowAnyMethod().AllowAnyHeader();
             return;
         }
 
-        policy.WithOrigins(origin).AllowAnyMethod().AllowAnyHeader();
+        if (string.IsNullOrWhiteSpace(originsConfig))
+        {
+            throw new InvalidOperationException("Cors:WithOrigin chưa được cấu hình cho môi trường production.");
+        }
+
+        var origins = originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader();
     });
 });
 
