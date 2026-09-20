@@ -36,7 +36,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Create([FromBody] CategoryUpsertDto dto)
         {
             var existing = await _categoryService.GetByNameAsync(dto.Name);
@@ -50,7 +50,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Update(int id, [FromBody] CategoryUpsertDto dto)
         {
             var category = await _categoryService.UpdateAsync(id, dto);
@@ -63,7 +63,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _categoryService.DeleteAsync(id);

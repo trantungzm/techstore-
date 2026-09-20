@@ -135,10 +135,10 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
-        /// Create new product (requires authentication)
+        /// Create new product (Admin/Warehouse only)
         /// </summary>
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
             // Tạo sản phẩm từ form quản trị; xử lý sâu nằm ở ProductService.
@@ -147,10 +147,10 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
-        /// Update product (requires authentication)
+        /// Update product (Admin/Warehouse only)
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
         {
             // Cập nhật master data sản phẩm, biến thể, ảnh và giá.
@@ -160,10 +160,10 @@ namespace BaseCore.APIService.Controllers
         }
 
         /// <summary>
-        /// Delete product (requires authentication)
+        /// Delete product (Admin/Warehouse only)
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _productService.DeleteAsync(id);

@@ -44,7 +44,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPost("definitions")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> CreateDefinition([FromBody] SpecDefinitionDto dto)
         {
             var validation = await ValidateDefinition(dto);
@@ -81,7 +81,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("definitions/{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> UpdateDefinition(int id, [FromBody] SpecDefinitionDto dto)
         {
             var definition = await _db.SpecDefinitions
@@ -110,7 +110,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpDelete("definitions/{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> DeleteDefinition(int id)
         {
             var definition = await _db.SpecDefinitions.FindAsync(id);
@@ -131,7 +131,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPost("options")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> CreateOption([FromBody] SpecOptionDto dto)
         {
             var validation = await ValidateOption(dto, ignoreDuplicate: true);
@@ -169,7 +169,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("options/{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> UpdateOption(int id, [FromBody] SpecOptionDto dto)
         {
             var option = await _db.SpecOptions.FindAsync(id);
@@ -190,7 +190,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpDelete("options/{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> DeleteOption(int id)
         {
             var option = await _db.SpecOptions.FindAsync(id);
@@ -227,7 +227,7 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("products/{productId}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> UpsertProductSpecs(int productId, [FromBody] List<ProductSpecValueUpsertDto> values)
         {
             var product = await _db.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == productId);

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BaseCore.AuthService.Controllers
@@ -23,6 +24,14 @@ namespace BaseCore.AuthService.Controllers
         {
             _userService = userService;
             _serviceProvider = serviceProvider;
+        }
+
+        private Guid? CurrentUserId()
+        {
+            var raw = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                      User.FindFirst("sub")?.Value ??
+                      User.FindFirst("id")?.Value;
+            return Guid.TryParse(raw, out var id) ? id : null;
         }
 
         [HttpGet]
@@ -65,6 +74,11 @@ namespace BaseCore.AuthService.Controllers
             if (!Guid.TryParse(id, out var guidId))
             {
                 return BadRequest(new { message = "Invalid user ID format" });
+            }
+
+            if (!User.IsInRole("Admin") && CurrentUserId() != guidId)
+            {
+                return Forbid();
             }
 
             var user = await _userService.GetById(guidId);
