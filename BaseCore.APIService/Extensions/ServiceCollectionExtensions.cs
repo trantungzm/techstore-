@@ -75,7 +75,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<IBrandService, BrandService>();
-        services.AddScoped<IBannerService, BannerService>();
         services.AddHostedService<PickupTimeoutBackgroundService>();
         return services;
     }
