@@ -14,14 +14,30 @@ builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS
+// CORS — restrict to a configured origin whitelist. In dev, fall back to the Vite dev server
+// origin if Cors:WithOrigin isn't set; outside dev, an unset/empty value fails startup instead
+// of silently allowing every origin (previously AllowAnyOrigin() unconditionally, even in prod).
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowConfiguredOrigins", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        var originsConfig = builder.Configuration["Cors:WithOrigin"];
+        if (builder.Environment.IsDevelopment())
+        {
+            var devOrigins = string.IsNullOrWhiteSpace(originsConfig)
+                ? new[] { "http://localhost:3000" }
+                : originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            policy.WithOrigins(devOrigins).AllowAnyMethod().AllowAnyHeader();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(originsConfig))
+        {
+            throw new InvalidOperationException("Cors:WithOrigin chưa được cấu hình cho môi trường production.");
+        }
+
+        var origins = originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader();
     });
 });
 
@@ -36,7 +52,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("AllowConfiguredOrigins");
 
 var webRootPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 if (Directory.Exists(webRootPath))
