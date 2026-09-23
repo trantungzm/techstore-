@@ -48,6 +48,7 @@ const normalizeLoginResponse = (response) => {
     return {
         data: {
             token: data.Token || data.token,
+            refreshToken: data.RefreshToken || data.refreshToken,
             userId: data.UserId || data.userId,
             username: data.Username || data.username,
             name: data.Name || data.name,
@@ -219,6 +220,10 @@ const normalizeProductResponse = (response) => {
 export const authApi = {
     // Đăng nhập và đăng ký người dùng
     login: (username, password) => api.post('/auth/login', { username, password }).then(normalizeLoginResponse),
+    // Đổi access token gần hết hạn lấy access token mới bằng refresh token (rotate luôn refresh token).
+    refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }).then(normalizeLoginResponse),
+    // Thu hồi refresh token phía server khi đăng xuất.
+    logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
     register: (data) => api.post('/auth/register', data).then((response) => {
         const payload = response.data || {};
         return {

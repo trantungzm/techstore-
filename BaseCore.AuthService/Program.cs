@@ -117,6 +117,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(sqlConnectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 // DI for Authentication Services
 builder.Services.AddScoped<IUserService, UserService>();

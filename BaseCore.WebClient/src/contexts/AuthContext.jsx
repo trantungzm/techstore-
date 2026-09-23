@@ -1,19 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { ADMIN_PANEL_ROLES } from '../constants/roles';
 import { authApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
-const isTokenExpired = (token) => {
+// Refresh this long before the access token actually expires, so a slow request never races
+// an expiry mid-flight.
+const REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
+const decodeTokenExpiryMs = (token) => {
     try {
         const base64Url = String(token).split('.')[1] || '';
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
         const payload = JSON.parse(atob(padded));
-        return payload.exp ? payload.exp * 1000 <= Date.now() : false;
+        return payload.exp ? payload.exp * 1000 : null;
     } catch {
-        return true;
+        return null;
     }
+};
+
+const isTokenExpired = (token) => {
+    const expiryMs = decodeTokenExpiryMs(token);
+    return expiryMs ? expiryMs <= Date.now() : false;
 };
 
 export const useAuth = () => {
@@ -27,6 +36,64 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const refreshTimerRef = useRef(null);
+
+    const clearRefreshTimer = () => {
+        if (refreshTimerRef.current) {
+            clearTimeout(refreshTimerRef.current);
+            refreshTimerRef.current = null;
+        }
+    };
+
+    // Schedule a proactive refresh ~5 minutes before the access token expires, instead of
+    // waiting for a request to fail with 401.
+    const scheduleRefresh = (token) => {
+        clearRefreshTimer();
+        const expiryMs = decodeTokenExpiryMs(token);
+        if (!expiryMs) return;
+        const delay = Math.max(expiryMs - Date.now() - REFRESH_BUFFER_MS, 5000);
+        refreshTimerRef.current = setTimeout(() => {
+            refreshAccessToken();
+        }, delay);
+    };
+
+    const clearSession = () => {
+        clearRefreshTimer();
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        setUser(null);
+    };
+
+    const applySession = (userData) => {
+        localStorage.setItem('token', userData.token);
+        if (userData.refreshToken) {
+            localStorage.setItem('refreshToken', userData.refreshToken);
+        }
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        scheduleRefresh(userData.token);
+    };
+
+    const refreshAccessToken = async () => {
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        if (!storedRefreshToken) {
+            clearSession();
+            return;
+        }
+        try {
+            const response = await authApi.refresh(storedRefreshToken);
+            const userData = response.data;
+            if (!userData.token || isTokenExpired(userData.token)) {
+                clearSession();
+                return;
+            }
+            applySession(userData);
+        } catch {
+            // Refresh token invalid/expired/revoked — user must log in again.
+            clearSession();
+        }
+    };
 
     useEffect(() => {
         try {
@@ -34,19 +101,18 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             if (storedUser && token) {
                 if (isTokenExpired(token)) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    setUser(null);
+                    clearSession();
                 } else {
                     setUser(JSON.parse(storedUser));
+                    scheduleRefresh(token);
                 }
             }
         } catch {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setUser(null);
+            clearSession();
         }
         setLoading(false);
+        return clearRefreshTimer;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const login = async (username, password) => {
@@ -57,9 +123,7 @@ export const AuthProvider = ({ children }) => {
                 return { success: false, message: 'Login failed' };
             }
 
-            localStorage.setItem('token', userData.token);
-            localStorage.setItem('user', JSON.stringify(userData));
-            setUser(userData);
+            applySession(userData);
 
             return { success: true, user: userData };
         } catch (error) {
@@ -81,9 +145,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        if (storedRefreshToken) {
+            // Best-effort server-side revoke; don't block logout on the network call.
+            authApi.logout(storedRefreshToken).catch(() => {});
+        }
+        clearSession();
     };
 
     const isAdmin = () => {
