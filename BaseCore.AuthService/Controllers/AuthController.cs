@@ -206,9 +206,11 @@ namespace BaseCore.AuthService.Controllers
 
                 return Ok(new { message = "Registration successful", userId = createdUser.Id });
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                return BadRequest(new { message = "Registration failed: " + ex.Message });
+                // Don't leak DB/exception detail (e.g. constraint text) to the client; the
+                // exception itself is still available to server-side logging/diagnostics.
+                return BadRequest(new { message = "Registration failed. Please check your information and try again." });
             }
         }
     }

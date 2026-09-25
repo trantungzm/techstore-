@@ -154,9 +154,11 @@ namespace BaseCore.AuthService.Controllers
                     CreatedAt = createdUser.Created
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(new { message = "Failed to create user: " + ex.Message });
+                // Don't leak DB/exception detail (e.g. constraint text) to the client; the
+                // exception itself is still available to server-side logging/diagnostics.
+                return BadRequest(new { message = "Failed to create user. Please check the submitted information and try again." });
             }
         }
 

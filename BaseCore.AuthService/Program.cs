@@ -160,11 +160,13 @@ app.UseExceptionHandler(errorApp =>
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
 
+        // Only leak exception detail in Development — production clients get a generic message,
+        // full detail still goes to the console/log sinks via the exception itself.
         var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
         {
             Status = statusCode,
             Title = statusCode == StatusCodes.Status400BadRequest ? "Bad Request" : "Server Error",
-            Detail = exception?.Message,
+            Detail = app.Environment.IsDevelopment() ? exception?.ToString() : "An error occurred while processing your request.",
             Instance = feature?.Path
         };
         problem.Extensions["traceId"] = context.TraceIdentifier;
