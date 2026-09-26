@@ -99,7 +99,12 @@ namespace BaseCore.APIService.Controllers
         public async Task<IActionResult> GetClaim(int id)
         {
             var claim = await _service.GetClaimAsync(id);
-            return claim == null ? NotFound(new { message = "Yeu cau bao hanh khong ton tai." }) : Ok(claim);
+            if (claim == null) return NotFound(new { message = "Yeu cau bao hanh khong ton tai." });
+            if (!IsStaffViewer() && (CurrentUserId() is not Guid userId || claim.UserId != userId))
+            {
+                return Forbid();
+            }
+            return Ok(claim);
         }
 
         [HttpPut("claims/{id}/status")]
@@ -113,12 +118,27 @@ namespace BaseCore.APIService.Controllers
 
         [HttpGet("claims/{id}/updates")]
         [Authorize]
-        public async Task<IActionResult> Updates(int id) => Ok(await _service.GetClaimUpdatesAsync(id));
+        public async Task<IActionResult> Updates(int id)
+        {
+            if (!IsStaffViewer())
+            {
+                var claim = await _service.GetClaimAsync(id);
+                if (claim == null) return NotFound(new { message = "Yeu cau bao hanh khong ton tai." });
+                if (CurrentUserId() is not Guid userId || claim.UserId != userId) return Forbid();
+            }
+            return Ok(await _service.GetClaimUpdatesAsync(id));
+        }
 
         private Guid? CurrentUserId()
         {
             var raw = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
             return Guid.TryParse(raw, out var value) ? value : null;
+        }
+
+        // Nhân sự nội bộ được xem mọi claim (không chỉ claim của chính mình).
+        private bool IsStaffViewer()
+        {
+            return User.IsInRole("Admin") || User.IsInRole("Warehouse") || User.IsInRole("Technical");
         }
 
         private static object Paged<T>(List<T> items, int totalCount, int page, int pageSize)

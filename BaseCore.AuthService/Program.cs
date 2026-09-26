@@ -18,6 +18,17 @@ using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// JWT signing secret must never be hardcoded in appsettings.json (it was, and got committed to git
+// history — see security audit). Read it from the JWT_SECRET env var (or dotnet user-secrets in dev),
+// overriding whatever appsettings has. If neither is set, the existing Jwt:SecretKey null-check below
+// fails startup loudly instead of running with no/empty signing key.
+var jwtSecretFromEnv = Environment.GetEnvironmentVariable("JWT_SECRET");
+if (!string.IsNullOrWhiteSpace(jwtSecretFromEnv))
+{
+    builder.Configuration["Jwt:SecretKey"] = jwtSecretFromEnv;
+    builder.Configuration["AppSettings:Secret"] = jwtSecretFromEnv;
+}
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -40,18 +51,30 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddEndpointsApiExplorer();
 
+// Origin whitelist comes from Cors:WithOrigin (comma-separated). In dev, an unset value falls
+// back to the Vite dev server origin; outside dev, an unset/empty value fails startup instead
+// of silently allowing every origin.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        var origin = builder.Configuration["Cors:WithOrigin"];
-        if (builder.Environment.IsDevelopment() || string.IsNullOrWhiteSpace(origin))
+        var originsConfig = builder.Configuration["Cors:WithOrigin"];
+        if (builder.Environment.IsDevelopment())
         {
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+            var devOrigins = string.IsNullOrWhiteSpace(originsConfig)
+                ? new[] { "http://localhost:3000", "http://localhost:5000" }
+                : originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            policy.WithOrigins(devOrigins).AllowAnyMethod().AllowAnyHeader();
             return;
         }
 
-        policy.WithOrigins(origin).AllowAnyMethod().AllowAnyHeader();
+        if (string.IsNullOrWhiteSpace(originsConfig))
+        {
+            throw new InvalidOperationException("Cors:WithOrigin chưa được cấu hình cho môi trường production.");
+        }
+
+        var origins = originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader();
     });
 });
 
@@ -94,6 +117,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(sqlConnectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 // DI for Authentication Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -136,11 +160,13 @@ app.UseExceptionHandler(errorApp =>
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";
 
+        // Only leak exception detail in Development — production clients get a generic message,
+        // full detail still goes to the console/log sinks via the exception itself.
         var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
         {
             Status = statusCode,
             Title = statusCode == StatusCodes.Status400BadRequest ? "Bad Request" : "Server Error",
-            Detail = exception?.Message,
+            Detail = app.Environment.IsDevelopment() ? exception?.ToString() : "An error occurred while processing your request.",
             Instance = feature?.Path
         };
         problem.Extensions["traceId"] = context.TraceIdentifier;

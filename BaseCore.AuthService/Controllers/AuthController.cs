@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using BaseCore.Common;
+using BaseCore.Entities;
 using BaseCore.Repository;
+using BaseCore.Repository.Authen;
 using BaseCore.Services.Authen;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BaseCore.AuthService.Controllers
@@ -12,13 +16,18 @@ namespace BaseCore.AuthService.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IConfiguration _configuration;
         private readonly IServiceProvider _serviceProvider;
-        private const int TokenExpirationMinutes = 480; // 8 hours
+        // Access token is short-lived; a stolen token via XSS is only usable for this window.
+        private const int TokenExpirationMinutes = 60;
+        // Refresh token covers the actual session length; stored only as a hash, rotated on use.
+        private const int RefreshTokenExpirationDays = 7;
 
-        public AuthController(IUserService userService, IConfiguration configuration, IServiceProvider serviceProvider)
+        public AuthController(IUserService userService, IRefreshTokenRepository refreshTokenRepository, IConfiguration configuration, IServiceProvider serviceProvider)
         {
             _userService = userService;
+            _refreshTokenRepository = refreshTokenRepository;
             _configuration = configuration;
             _serviceProvider = serviceProvider;
         }
@@ -38,7 +47,55 @@ namespace BaseCore.AuthService.Controllers
                 return Unauthorized(new { message = "Invalid username or password" });
             }
 
-            // Generate JWT token
+            return Ok(await BuildLoginResponseAsync(user));
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return BadRequest(new { message = "Refresh token is required" });
+            }
+
+            var existing = await _refreshTokenRepository.GetActiveByHashAsync(HashRefreshToken(request.RefreshToken));
+            if (existing == null)
+            {
+                return Unauthorized(new { message = "Invalid or expired refresh token" });
+            }
+
+            var user = await _userService.GetById(existing.UserId);
+            if (user == null || !user.IsActive)
+            {
+                await _refreshTokenRepository.RevokeAsync(existing);
+                return Unauthorized(new { message = "Invalid or expired refresh token" });
+            }
+
+            // Rotation: the presented refresh token is single-use — revoke it before issuing the
+            // replacement, so a leaked-but-already-used token can't be replayed.
+            await _refreshTokenRepository.RevokeAsync(existing);
+
+            return Ok(await BuildLoginResponseAsync(user));
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] RefreshRequest request)
+        {
+            if (request != null && !string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                var existing = await _refreshTokenRepository.GetActiveByHashAsync(HashRefreshToken(request.RefreshToken));
+                if (existing != null)
+                {
+                    await _refreshTokenRepository.RevokeAsync(existing);
+                }
+            }
+
+            return Ok(new { message = "Logged out" });
+        }
+
+        private async Task<LoginResponse> BuildLoginResponseAsync(User user)
+        {
+            // Generate JWT access token
             var secretKey = _configuration["Jwt:SecretKey"] ?? _configuration["AppSettings:Secret"]
                 ?? throw new InvalidOperationException("Jwt:SecretKey chưa được cấu hình (appsettings).");
             var issuer = _configuration["Jwt:Issuer"] ?? "BaseCore";
@@ -54,9 +111,18 @@ namespace BaseCore.AuthService.Controllers
                 audience
             );
 
-            return Ok(new LoginResponse
+            var rawRefreshToken = GenerateRefreshTokenValue();
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user.Id,
+                TokenHash = HashRefreshToken(rawRefreshToken),
+                ExpiresAt = DateTime.UtcNow.AddDays(RefreshTokenExpirationDays)
+            });
+
+            return new LoginResponse
             {
                 Token = token,
+                RefreshToken = rawRefreshToken,
                 UserId = user.Id.ToString(),
                 Username = user.UserName,
                 Name = user.Name,
@@ -74,7 +140,20 @@ namespace BaseCore.AuthService.Controllers
                     IsActive = user.IsActive,
                     CreatedAt = user.Created
                 }
-            });
+            };
+        }
+
+        // Never store the raw refresh token — only its hash, so a DB leak can't be replayed.
+        private static string GenerateRefreshTokenValue()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        }
+
+        private static string HashRefreshToken(string rawToken)
+        {
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+            return Convert.ToBase64String(hash);
         }
 
         private async Task<string> ResolveRoleName(int userType)
@@ -127,9 +206,11 @@ namespace BaseCore.AuthService.Controllers
 
                 return Ok(new { message = "Registration successful", userId = createdUser.Id });
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                return BadRequest(new { message = "Registration failed: " + ex.Message });
+                // Don't leak DB/exception detail (e.g. constraint text) to the client; the
+                // exception itself is still available to server-side logging/diagnostics.
+                return BadRequest(new { message = "Registration failed. Please check your information and try again." });
             }
         }
     }
@@ -140,9 +221,15 @@ namespace BaseCore.AuthService.Controllers
         public string Password { get; set; }
     }
 
+    public class RefreshRequest
+    {
+        public string RefreshToken { get; set; }
+    }
+
     public class LoginResponse
     {
         public string Token { get; set; }
+        public string RefreshToken { get; set; }
         public string UserId { get; set; }
         public string Username { get; set; }
         public string Name { get; set; }

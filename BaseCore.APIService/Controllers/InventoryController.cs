@@ -31,10 +31,8 @@ namespace BaseCore.APIService.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            // Anything else falls through to the global exception handler (Program.cs),
+            // which returns a generic message in production instead of raw ex.Message.
         }
 
         [HttpPost("opening-stock")]
@@ -50,10 +48,8 @@ namespace BaseCore.APIService.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            // Anything else falls through to the global exception handler (Program.cs),
+            // which returns a generic message in production instead of raw ex.Message.
         }
 
         [HttpGet("products/{productId}/has-opening-stock")]

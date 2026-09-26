@@ -1,0 +1,5 @@
+{
+  "Cors": {
+    "WithOrigin": "https://REPLACE_WITH_PRODUCTION_ORIGIN"
+  }
+}

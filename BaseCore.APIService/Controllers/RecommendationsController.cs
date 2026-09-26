@@ -35,14 +35,14 @@ namespace BaseCore.APIService.Controllers
         }
 
         [HttpPut("cross-sell/{productId}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> SetCrossSellByRoute(int productId, [FromBody] CrossSellUpdateDto dto)
         {
             return await SaveCrossSell(productId, dto.ProductIds);
         }
 
         [HttpPut("cross-sell")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> SetCrossSellByQuery([FromQuery] int productId, [FromBody] CrossSellUpdateDto dto)
         {
             return await SaveCrossSell(productId, dto.ProductIds);
