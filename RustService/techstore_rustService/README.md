@@ -39,32 +39,29 @@ cd RustService\techstore_rustService
 cargo run
 ```
 
-Mac dinh service bind:
+Mac dinh service bind (khong can set gi):
 
 ```text
-http://localhost:7001
+http://127.0.0.1:7001
 ```
 
-Mac dinh connection string:
-
-```text
-Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;TrustServerCertificate=true
-```
-
-Override bang environment variables:
+`TECHSTORE_RUST_DATABASE_URL` va `TECHSTORE_RUST_CORS_ORIGINS` **bat buoc phai set** — service khong con connection string mac dinh hardcode, se bao loi ro rang va khong start neu thieu bien nao (rieng `TECHSTORE_RUST_CORS_ORIGINS` debug build co fallback origin dev, xem phan CORS ben duoi).
 
 ```powershell
 $env:TECHSTORE_RUST_BIND = "127.0.0.1:7001"
-$env:TECHSTORE_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;TrustServerCertificate=true"
+$env:TECHSTORE_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=true;TrustServerCertificate=true"
+$env:TECHSTORE_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"
 cargo run
 ```
+
+Khuyen nghi `Encrypt=true`. Chi dung `Encrypt=false` khi may dev khong co cert SQL Server hop le va biet ro dang chay trong mang noi bo tin cay (khong encrypt = du lieu + password (neu dung SQL auth) di qua ket noi TCP dang plain text).
 
 Service nay chua co auth layer rieng (xem "API hien co" ben duoi) — **khong bind `0.0.0.0`** tru khi thuc su can (vd. chay trong container co network isolation rieng, va host/security group da chan truy cap tu ngoai vao port nay). Neu bat buoc phai bind `0.0.0.0`, dam bao firewall/security group chan port 7001 khoi internet truoc.
 
 Neu process khong dung duoc Windows integrated auth, dung SQL auth:
 
 ```powershell
-$env:TECHSTORE_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore;User Id=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=false;TrustServerCertificate=true"
+$env:TECHSTORE_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore;User Id=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=true;TrustServerCertificate=true"
 cargo run
 ```
 

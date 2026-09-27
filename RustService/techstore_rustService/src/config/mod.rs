@@ -21,10 +21,14 @@ impl AppConfig {
         let bind_addr =
             env::var("TECHSTORE_RUST_BIND").unwrap_or_else(|_| "127.0.0.1:7001".to_string());
 
-        let database_url = env::var("TECHSTORE_RUST_DATABASE_URL").unwrap_or_else(|_| {
-            "Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;TrustServerCertificate=true"
-                .to_string()
-        });
+        // No hardcoded fallback — a silent default connection string is exactly how a stale
+        // dev hostname (and a weak-by-default Encrypt=false) ends up baked into what looks
+        // like "just running the service". Require it explicitly, fail loudly if missing.
+        let database_url = env::var("TECHSTORE_RUST_DATABASE_URL").map_err(|_| {
+            ApiError::config(
+                "TECHSTORE_RUST_DATABASE_URL must be set (ADO-style SQL Server connection string) — refusing to start with no configured database".to_string(),
+            )
+        })?;
         let db_pool_size = env::var("TECHSTORE_RUST_DB_POOL_SIZE")
             .ok()
             .and_then(|value| value.parse::<usize>().ok())
