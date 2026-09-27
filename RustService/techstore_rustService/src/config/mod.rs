@@ -9,10 +9,11 @@ pub struct AppConfig {
     pub bind_addr: String,
     pub database_url: String,
     pub db_pool_size: usize,
+    pub cors_origins: Vec<String>,
 }
 
 impl AppConfig {
-    pub fn from_env() -> Self {
+    pub fn from_env() -> ApiResult<Self> {
         // Default to loopback-only — this service has no auth layer of its own (see
         // src/routes/mod.rs), so binding 0.0.0.0 by default would expose it directly on any
         // reachable network interface. Only bind 0.0.0.0 deliberately, e.g. inside an
@@ -30,10 +31,42 @@ impl AppConfig {
             .unwrap_or(4)
             .clamp(1, 64);
 
-        Self {
+        let cors_origins = Self::resolve_cors_origins()?;
+
+        Ok(Self {
             bind_addr,
             database_url,
             db_pool_size,
+            cors_origins,
+        })
+    }
+
+    // Whitelist comes from TECHSTORE_RUST_CORS_ORIGINS (comma-separated). Debug builds (plain
+    // `cargo run`/`cargo build`) fall back to the local frontend/gateway origins for convenience;
+    // release builds refuse to start with CORS wide open — no permissive fallback, ever.
+    fn resolve_cors_origins() -> ApiResult<Vec<String>> {
+        match env::var("TECHSTORE_RUST_CORS_ORIGINS") {
+            Ok(raw) => {
+                let origins = raw
+                    .split(',')
+                    .map(str::trim)
+                    .filter(|value| !value.is_empty())
+                    .map(str::to_string)
+                    .collect::<Vec<_>>();
+                if origins.is_empty() {
+                    return Err(ApiError::config(
+                        "TECHSTORE_RUST_CORS_ORIGINS is set but contains no origins".to_string(),
+                    ));
+                }
+                Ok(origins)
+            }
+            Err(_) if cfg!(debug_assertions) => Ok(vec![
+                "http://localhost:3000".to_string(),
+                "http://localhost:5000".to_string(),
+            ]),
+            Err(_) => Err(ApiError::config(
+                "TECHSTORE_RUST_CORS_ORIGINS must be set (comma-separated origin whitelist) in release builds — refusing to start with CORS wide open".to_string(),
+            )),
         }
     }
 
