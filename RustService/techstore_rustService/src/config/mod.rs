@@ -9,27 +9,68 @@ pub struct AppConfig {
     pub bind_addr: String,
     pub database_url: String,
     pub db_pool_size: usize,
+    pub cors_origins: Vec<String>,
 }
 
 impl AppConfig {
-    pub fn from_env() -> Self {
+    pub fn from_env() -> ApiResult<Self> {
+        // Default to loopback-only — this service has no auth layer of its own (see
+        // src/routes/mod.rs), so binding 0.0.0.0 by default would expose it directly on any
+        // reachable network interface. Only bind 0.0.0.0 deliberately, e.g. inside an
+        // isolated container network where the host firewall/security group is the boundary.
         let bind_addr =
-            env::var("TECHSTORE_RUST_BIND").unwrap_or_else(|_| "0.0.0.0:7001".to_string());
+            env::var("TECHSTORE_RUST_BIND").unwrap_or_else(|_| "127.0.0.1:7001".to_string());
 
-        let database_url = env::var("TECHSTORE_RUST_DATABASE_URL").unwrap_or_else(|_| {
-            "Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;TrustServerCertificate=true"
-                .to_string()
-        });
+        // No hardcoded fallback — a silent default connection string is exactly how a stale
+        // dev hostname (and a weak-by-default Encrypt=false) ends up baked into what looks
+        // like "just running the service". Require it explicitly, fail loudly if missing.
+        let database_url = env::var("TECHSTORE_RUST_DATABASE_URL").map_err(|_| {
+            ApiError::config(
+                "TECHSTORE_RUST_DATABASE_URL must be set (ADO-style SQL Server connection string) — refusing to start with no configured database".to_string(),
+            )
+        })?;
         let db_pool_size = env::var("TECHSTORE_RUST_DB_POOL_SIZE")
             .ok()
             .and_then(|value| value.parse::<usize>().ok())
             .unwrap_or(4)
             .clamp(1, 64);
 
-        Self {
+        let cors_origins = Self::resolve_cors_origins()?;
+
+        Ok(Self {
             bind_addr,
             database_url,
             db_pool_size,
+            cors_origins,
+        })
+    }
+
+    // Whitelist comes from TECHSTORE_RUST_CORS_ORIGINS (comma-separated). Debug builds (plain
+    // `cargo run`/`cargo build`) fall back to the local frontend/gateway origins for convenience;
+    // release builds refuse to start with CORS wide open — no permissive fallback, ever.
+    fn resolve_cors_origins() -> ApiResult<Vec<String>> {
+        match env::var("TECHSTORE_RUST_CORS_ORIGINS") {
+            Ok(raw) => {
+                let origins = raw
+                    .split(',')
+                    .map(str::trim)
+                    .filter(|value| !value.is_empty())
+                    .map(str::to_string)
+                    .collect::<Vec<_>>();
+                if origins.is_empty() {
+                    return Err(ApiError::config(
+                        "TECHSTORE_RUST_CORS_ORIGINS is set but contains no origins".to_string(),
+                    ));
+                }
+                Ok(origins)
+            }
+            Err(_) if cfg!(debug_assertions) => Ok(vec![
+                "http://localhost:3000".to_string(),
+                "http://localhost:5000".to_string(),
+            ]),
+            Err(_) => Err(ApiError::config(
+                "TECHSTORE_RUST_CORS_ORIGINS must be set (comma-separated origin whitelist) in release builds — refusing to start with CORS wide open".to_string(),
+            )),
         }
     }
 

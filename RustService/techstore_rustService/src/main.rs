@@ -19,7 +19,7 @@ async fn main() -> error::ApiResult<()> {
         )
         .init();
 
-    let config = config::AppConfig::from_env();
+    let config = config::AppConfig::from_env()?;
     let bind_addr = config.bind_addr.clone();
     let db_pool = db::DbPool::new(config.db_config()?, config.db_pool_size).await;
     let state = state::AppState {
@@ -32,7 +32,7 @@ async fn main() -> error::ApiResult<()> {
     } else {
         tracing::info!(runtime_warmup_ms = warm_started.elapsed().as_millis() as u64);
     }
-    let app = routes::app_router(state);
+    let app = routes::app_router(state, &config.cors_origins);
 
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
     tracing::info!("TechStore Rust Service listening on http://{}", bind_addr);
