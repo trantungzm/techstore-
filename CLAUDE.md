@@ -63,16 +63,12 @@ Database migrations are **not** applied automatically — `BaseCore.APIService/P
 
 ### Rust service (`RustService/techstore_rustService`)
 
-The real, actively-developed Rust service (merged via PR #27) — not the same as the older `services/rust-backend-service` scaffold below, which predates it and is superseded/unused. Axum + `tiberius` (SQL Server driver), reads the same `techstore` database directly (no writes, no migrations). Currently exposes 5 read-only routes under `/api/rust` (Product Compare, Recommendations, Search Suggestions) — mirrors already-public .NET endpoints, so no auth layer exists in this service at all. **Not yet wired into `ocelot.json`** — only reachable directly on its own port today.
+The one and only Rust service (merged via PR #27; the earlier `services/rust-backend-service` scaffold was deleted once this became the real implementation — don't recreate it). Axum + `tiberius` (SQL Server driver), reads the same `techstore` database directly (no writes, no migrations). Currently exposes 5 read-only routes under `/api/rust` (Product Compare, Recommendations, Search Suggestions) — mirrors already-public .NET endpoints, so no auth layer exists in this service at all. **Not yet wired into `ocelot.json`** — only reachable directly on its own port today.
 
 - Binds `127.0.0.1:7001` by default (loopback-only — deliberate, since there's no auth layer; don't default to `0.0.0.0`).
 - Env vars (no hardcoded fallback except bind address — all of these must be set explicitly or the service refuses to start): `TECHSTORE_RUST_BIND` (default `127.0.0.1:7001`), `TECHSTORE_RUST_DATABASE_URL` (ADO-style SQL Server connection string, **required**, no default), `TECHSTORE_RUST_DB_POOL_SIZE` (default `4`), `TECHSTORE_RUST_CORS_ORIGINS` (comma-separated whitelist; debug builds fall back to `http://localhost:3000,http://localhost:5000`, release builds **require** it set — refuses to start with CORS wide open otherwise).
 - Does **not** use JWT/`JWT_SECRET` at all currently — if a future route needs auth (anything beyond read-only public data), add JWT middleware (same HS256 secret as .NET/PHP) before exposing it; don't ship a protected route with no auth layer to fall back on.
 - See `RustService/techstore_rustService/README.md` for the full env var / endpoint reference.
-
-#### Old scaffold (`services/rust-backend-service`) — superseded, not in active use
-
-Pre-dates the real implementation above; `Cargo.toml` + a stub `src/main.rs` only, documents a different (never-implemented) env var set (`APP_PORT`, `JWT_SECRET`, `NOTIFICATION_MODE=worker`) and a Notifications-worker role that was never built. Left in place but not actively developed — don't add to it; extend `RustService/techstore_rustService` instead.
 
 ## Commands
 

@@ -32,7 +32,7 @@ Tai lieu lien quan:
 Khung service moi:
 
 - `services/php-admin-service`
-- `services/rust-backend-service`
+- `RustService/techstore_rustService`
 
 ## Cach chay frontend
 
