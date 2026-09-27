@@ -54,10 +54,12 @@ Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;Trus
 Override bang environment variables:
 
 ```powershell
-$env:TECHSTORE_RUST_BIND = "0.0.0.0:7001"
+$env:TECHSTORE_RUST_BIND = "127.0.0.1:7001"
 $env:TECHSTORE_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;TrustServerCertificate=true"
 cargo run
 ```
+
+Service nay chua co auth layer rieng (xem "API hien co" ben duoi) — **khong bind `0.0.0.0`** tru khi thuc su can (vd. chay trong container co network isolation rieng, va host/security group da chan truy cap tu ngoai vao port nay). Neu bat buoc phai bind `0.0.0.0`, dam bao firewall/security group chan port 7001 khoi internet truoc.
 
 Neu process khong dung duoc Windows integrated auth, dung SQL auth:
 

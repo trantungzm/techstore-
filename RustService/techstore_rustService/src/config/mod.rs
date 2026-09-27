@@ -13,8 +13,12 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Self {
+        // Default to loopback-only — this service has no auth layer of its own (see
+        // src/routes/mod.rs), so binding 0.0.0.0 by default would expose it directly on any
+        // reachable network interface. Only bind 0.0.0.0 deliberately, e.g. inside an
+        // isolated container network where the host firewall/security group is the boundary.
         let bind_addr =
-            env::var("TECHSTORE_RUST_BIND").unwrap_or_else(|_| "0.0.0.0:7001".to_string());
+            env::var("TECHSTORE_RUST_BIND").unwrap_or_else(|_| "127.0.0.1:7001".to_string());
 
         let database_url = env::var("TECHSTORE_RUST_DATABASE_URL").unwrap_or_else(|_| {
             "Server=LUONG-CONG;Database=techstore;Integrated Security=true;Encrypt=false;TrustServerCertificate=true"
