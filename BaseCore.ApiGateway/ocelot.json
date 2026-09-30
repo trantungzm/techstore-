@@ -350,6 +350,42 @@
       ],
       "UpstreamPathTemplate": "/api/payments/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/product-compare/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/rust/product-compare/{everything}",
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/product-compare",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/rust/product-compare",
+      "UpstreamHttpMethod": [ "POST", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/search-suggestions/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/rust/search-suggestions/{everything}",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/search-suggestions",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/rust/search-suggestions",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ]
     }
   ],
   "GlobalConfiguration": {
