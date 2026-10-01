@@ -61,3 +61,13 @@ Phát sinh từ `npm audit` / `composer audit` / `dotnet list package --vulnerab
 - `JWT_SECRET` thật cho cả 3 service .NET + PHP.
 - Domain CORS thật (`Cors:WithOrigin` cho Gateway/APIService/AuthService, `CORS_ALLOWED_ORIGINS` cho PHP admin service).
 - Chạy migration DB (bao gồm `AddRefreshTokens`) trên staging/production trước khi deploy code.
+
+## 4. `RecommendationsController.GetAutoCrossSell` (.NET) crash 100% request — đã xử lý qua cutover sang Rust
+
+**Đã xử lý** trên nhánh `feature/wire-rust-gateway` (2026-10-01), commit `a3b62f1` + `b89ae58`.
+
+- **Bug:** `BaseCore.APIService/Controllers/RecommendationsController.cs:71` (action `GetAutoCrossSell`) dùng `x.Stock > 0` trong LINQ, với `Stock` là computed property (`get => TotalStock ?? 0`) trên entity `Product`. EF Core không dịch được biểu thức này sang SQL cho câu query cụ thể này, ném `InvalidOperationException: Translation of member 'Stock' on entity type 'Product' failed`.
+- **Mức độ:** nghiêm trọng trên thực tế — `ProductRecommendations` rỗng hoàn toàn (xác nhận qua `sqlcmd`), nên **100% request** gọi `GET /api/recommendations/auto-cross-sell` đều rơi vào nhánh fallback chứa LINQ lỗi này, trả về HTTP 400 cho mọi sản phẩm. Tính năng "gợi ý tự động" đã chết từ trước khi có bất kỳ thay đổi nào trong đợt cutover — không phải do thay đổi lần này gây ra, chỉ là được phát hiện trong lúc so sánh output .NET vs Rust trước khi cutover (test 14 product ID, 14/14 đều lỗi 400).
+- **Cách phát hiện:** so sánh output thật giữa .NET (`:5001`) và Rust (`:7001`) cho cùng 14 product ID đa dạng category/tồn kho trước khi cutover — phát hiện .NET luôn 400 còn Rust luôn 200 với dữ liệu hợp lý.
+- **Cách xử lý:** không vá bug .NET riêng lẻ — cutover thẳng route `/api/recommendations/cross-sell` và `/auto-cross-sell` sang RustService (đã có logic lọc/sắp xếp tương đương, viết bằng SQL trực tiếp nên không gặp lỗi dịch LINQ), sau đó xoá hẳn `RecommendationsController.cs`. Ghi lại ở đây để không bị hiểu lầm là "xoá code đang chạy tốt" — controller này đã crash từ trước khi bị xoá.
+- **Tác dụng phụ cần biết:** 2 action `PUT` của controller cũ (cấu hình thủ công cross-sell cho từng sản phẩm) bị retired theo, không migrate sang Rust (Rust read-only, không có auth layer). Xác nhận trước khi xoá: 0 call site ở frontend. Hiện **không có API nào ghi được** bảng `ProductRecommendations` — xem `docs/architecture/multi-service-migration-plan.md` mục Data Ownership nếu cần làm lại tính năng này.
