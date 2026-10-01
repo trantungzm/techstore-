@@ -29,9 +29,20 @@ BaseCore.ApiGateway
 | Banner | PHP | `Banners` |
 | Settings | PHP | `StoreSettings` |
 | Notifications admin | PHP (ghi) | `NotificationTemplates`, `NotificationCampaigns`, `NotificationJobs` |
-| Recommendations | Rust | `ProductRecommendations` |
+| Recommendations | Rust (chi doc) | `ProductRecommendations` |
 | Notifications worker | Rust | `NotificationOutbox`, `Notifications` |
 | Notifications user-facing API | .NET giai doan dau | `Notifications` doc/mark-read/delete |
+
+**Ghi chu ve `ProductRecommendations`:**
+
+- Rust chi **doc** bang nay (2 endpoint GET cross-sell/auto-cross-sell), khong co endpoint ghi nao.
+- Truoc day .NET `RecommendationsController` co 2 action PUT de admin cau hinh thu cong
+  san pham cross-sell cho tung san pham, nhung khong co trang/component nao o frontend
+  goi toi (0 call site, xac nhan luc cutover). Khi xoa controller nay (commit `b89ae58`),
+  2 action PUT bi retired luon thay vi chuyen sang Rust — hien **khong co API nao ghi duoc**
+  `ProductRecommendations`. Neu sau nay can tinh nang nay lai, phai thiet ke moi (vd. them
+  write endpoint co auth vao Rust, hoac giu lai o mot service khac) — khong phai chuyen
+  nguyen trang vi ban cu da chet tu truoc.
 
 **Ghi chu ve `NotificationTemplates` / `NotificationCampaigns` / `NotificationJobs`:**
 
@@ -69,13 +80,15 @@ BaseCore.ApiGateway
 
 ### Chuyen sang Rust
 
-| Endpoint hien tai | Trang thai muc tieu | Ghi chu |
+| Endpoint hien tai | Trang thai | Ghi chu |
 | --- | --- | --- |
-| `GET /api/recommendations/cross-sell` | Rust | Doc recommendations |
-| `PUT /api/recommendations/cross-sell/{productId}` | Rust | Admin/auth |
-| `PUT /api/recommendations/cross-sell?productId=` | Rust | Admin/auth |
-| `GET /api/recommendations/auto-cross-sell` | Rust | Tu dong tinh de xuat |
-| `POST /internal/notifications/process` | Rust noi bo | Tuy chon cho worker trigger tay |
+| `GET /api/recommendations/cross-sell` | **Da xong** | Rust, route qua gateway tu commit `a3b62f1` |
+| `GET /api/recommendations/auto-cross-sell` | **Da xong** | Rust, route qua gateway tu commit `a3b62f1` — cutover nay dong thoi la bugfix: ban .NET cu crash 100% request (EF Core khong dich duoc LINQ `x.Stock > 0`), xem commit `a3b62f1` |
+| `PUT /api/recommendations/cross-sell/{productId}` | **Retired, khong migrate** | Khong co consumer nao o frontend (0 call site); Rust khong co write endpoint (read-only, khong co auth layer) nen khong the nhan PUT. Da xoa cung luc voi `RecommendationsController.cs` (commit `b89ae58`) thay vi chuyen sang Rust nhu ke hoach ban dau ghi o day |
+| `PUT /api/recommendations/cross-sell?productId=` | **Retired, khong migrate** | Nhu tren |
+| `GET /api/rust/product-compare` | **Da xong** | Rust, khong co .NET tuong duong tu truoc |
+| `GET /api/rust/search-suggestions` | **Da xong** | Rust, khong co .NET tuong duong tu truoc |
+| `POST /internal/notifications/process` | Chua lam | Rust noi bo, tuy chon cho worker trigger tay |
 
 ### Giu tam thoi o .NET
 
@@ -100,11 +113,16 @@ BaseCore.ApiGateway
 - Chuyen `Banner` va `Settings`.
 - Route qua gateway, frontend khong doi endpoint.
 
-### Giai doan 3
+### Giai doan 3 — Da hoan tat
 
-- Tao `tech-rust-backend-service`.
-- Chuyen `Recommendations`.
-- Route qua gateway.
+- Tao `RustService/techstore_rustService` (PR #27).
+- Chuyen `Recommendations` (cross-sell, auto-cross-sell) — route qua gateway, `RecommendationsController.cs`
+  cu ben .NET da xoa (commit `b89ae58`). Cutover nay dong thoi fix mot bug production co san:
+  ban .NET crash 100% request auto-cross-sell do EF Core khong dich duoc LINQ (commit `a3b62f1`).
+- Them `Product Compare` va `Search Suggestions` — 2 tinh nang moi hoan toan, khong co ban .NET
+  tien nhiem, route qua gateway tu dau.
+- Con lai ngoai pham vi giai doan nay: 2 action PUT cau hinh cross-sell thu cong bi retired
+  (xem ghi chu Data Ownership o tren), chua co ke hoach lam lai.
 
 ### Giai doan 4
 
