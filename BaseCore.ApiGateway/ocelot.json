@@ -280,13 +280,40 @@
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
     },
     {
-      "DownstreamPathTemplate": "/api/recommendations/{everything}",
+      "DownstreamPathTemplate": "/api/rust/recommendations/cross-sell/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5001 }
+        { "Host": "127.0.0.1", "Port": 7001 }
       ],
-      "UpstreamPathTemplate": "/api/recommendations/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
+      "UpstreamPathTemplate": "/api/recommendations/cross-sell/{everything}",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/recommendations/cross-sell",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/recommendations/cross-sell",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/recommendations/auto-cross-sell/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/recommendations/auto-cross-sell/{everything}",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/rust/recommendations/auto-cross-sell",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "127.0.0.1", "Port": 7001 }
+      ],
+      "UpstreamPathTemplate": "/api/recommendations/auto-cross-sell",
+      "UpstreamHttpMethod": [ "GET", "OPTIONS" ]
     },
     {
       "DownstreamPathTemplate": "/api/settings",
