@@ -71,3 +71,9 @@ Phát sinh từ `npm audit` / `composer audit` / `dotnet list package --vulnerab
 - **Cách phát hiện:** so sánh output thật giữa .NET (`:5001`) và Rust (`:7001`) cho cùng 14 product ID đa dạng category/tồn kho trước khi cutover — phát hiện .NET luôn 400 còn Rust luôn 200 với dữ liệu hợp lý.
 - **Cách xử lý:** không vá bug .NET riêng lẻ — cutover thẳng route `/api/recommendations/cross-sell` và `/auto-cross-sell` sang RustService (đã có logic lọc/sắp xếp tương đương, viết bằng SQL trực tiếp nên không gặp lỗi dịch LINQ), sau đó xoá hẳn `RecommendationsController.cs`. Ghi lại ở đây để không bị hiểu lầm là "xoá code đang chạy tốt" — controller này đã crash từ trước khi bị xoá.
 - **Tác dụng phụ cần biết:** 2 action `PUT` của controller cũ (cấu hình thủ công cross-sell cho từng sản phẩm) bị retired theo, không migrate sang Rust (Rust read-only, không có auth layer). Xác nhận trước khi xoá: 0 call site ở frontend. Hiện **không có API nào ghi được** bảng `ProductRecommendations` — xem `docs/architecture/multi-service-migration-plan.md` mục Data Ownership nếu cần làm lại tính năng này.
+
+## 5. Tính năng ghi `ProductRecommendations` thủ công (admin cấu hình cross-sell tay) — đã gỡ, chưa có nơi thay thế
+
+Tính năng ghi `ProductRecommendations` thủ công (admin cấu hình cross-sell tay cho sản phẩm cụ thể) đã bị gỡ cùng đợt cutover Recommendations sang Rust (`PUT /api/recommendations` cũ không có consumer, Rust chỉ đọc theo nguyên tắc data ownership — xem mục 4 phía trên).
+
+Nếu sau này cần lại tính năng này (phổ biến trong e-commerce thật — ghim sản phẩm gợi ý theo chiến dịch/marketing), nên làm ở Rust (thêm khả năng ghi, phá nguyên tắc read-only hiện tại có chủ đích) hoặc PHP admin service (đồng bộ pattern Banner/Settings/Notifications đã quản trị qua PHP) — không nên làm lại ở .NET vì Recommendations đã không còn là service sở hữu bảng này.
