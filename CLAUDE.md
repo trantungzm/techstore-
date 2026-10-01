@@ -18,15 +18,20 @@ BaseCore.ApiGateway (Ocelot, :5000) -- serves the built SPA from wwwroot/ and ro
         |                                            Repairs, Tickets, Coupons, Banners,
         |                                            Settings, Recommendations, SignalR chat hub
         |-- services/php-admin-service (Laravel, :5003)   Banners, Settings, Notifications admin
-        \-- RustService/techstore_rustService (Rust, :7001, not yet routed through the gateway)
-                                                           Product Compare, Recommendations,
-                                                           Search Suggestions (read-only, no auth layer)
+        \-- RustService/techstore_rustService (Rust, :7001, partially routed through the gateway)
+                                                           Product Compare, Search Suggestions live via
+                                                           gateway; Recommendations implemented but NOT
+                                                           routed — conflicts with .NET's live
+                                                           cross-sell/auto-cross-sell, pending a decision
+                                                           on which service owns it (read-only, no auth layer)
 ```
 
 Route ownership is being migrated module-by-module per `docs/architecture/multi-service-migration-plan.md`:
 - Stays on .NET: Auth, Orders, Inventory, Products, Warranty, Repairs, Tickets.
 - Moving to PHP: Banner, Settings, Notifications admin.
 - Moving to Rust: Product Compare, Recommendations, Search Suggestions — all read-only, mirroring the equivalent (already-public) .NET endpoints. No Notification worker exists yet despite the `NotificationOutbox` table already being written by the .NET side — nothing currently polls it, from Rust or otherwise.
+  - **Product Compare** (`POST /api/rust/product-compare`) and **Search Suggestions** (`GET /api/rust/search-suggestions`) are wired into `ocelot.json` and reachable through the gateway — brand-new functionality, no .NET equivalent, frontend doesn't call either yet.
+  - **Recommendations** (`GET /api/rust/recommendations/cross-sell`, `/auto-cross-sell`, `/recommendations`) exist in the Rust code but are **deliberately not wired into `ocelot.json`** — they duplicate the .NET `RecommendationsController` (`GET /api/recommendations/cross-sell`, `/auto-cross-sell`), which is already live and is what the frontend actually calls today. Don't wire these until a decision is made on which service owns cross-sell/auto-cross-sell reads going forward — wiring both would let two services answer the same feature, which this project explicitly avoids.
 - When migrating a route: change the mapping in `BaseCore.ApiGateway/ocelot.json` first, keep the JSON response shape identical, and don't change the frontend call site unless the contract changes. Every route needs both an `{everything}` wildcard entry and an exact-path entry in `ocelot.json` (see existing banner/settings/notification entries for the pattern).
 - Multiple services must never own writes to the same table without explicit ownership (see the Data Ownership table in the migration plan doc).
 
@@ -63,7 +68,9 @@ Database migrations are **not** applied automatically — `BaseCore.APIService/P
 
 ### Rust service (`RustService/techstore_rustService`)
 
-The one and only Rust service (merged via PR #27; the earlier `services/rust-backend-service` scaffold was deleted once this became the real implementation — don't recreate it). Axum + `tiberius` (SQL Server driver), reads the same `techstore` database directly (no writes, no migrations). Currently exposes 5 read-only routes under `/api/rust` (Product Compare, Recommendations, Search Suggestions) — mirrors already-public .NET endpoints, so no auth layer exists in this service at all. **Not yet wired into `ocelot.json`** — only reachable directly on its own port today.
+The one and only Rust service (merged via PR #27; the earlier `services/rust-backend-service` scaffold was deleted once this became the real implementation — don't recreate it). Axum + `tiberius` (SQL Server driver), reads the same `techstore` database directly (no writes, no migrations). Currently exposes 5 read-only routes under `/api/rust` (Product Compare, Recommendations, Search Suggestions) — mirrors already-public .NET endpoints, so no auth layer exists in this service at all. **Product Compare and Search Suggestions are wired into `ocelot.json`** and reachable through the gateway; **Recommendations is implemented but not wired** — it duplicates the live .NET `RecommendationsController` (see the route ownership note above), pending a decision on which service owns it.
+
+`tiberius` doesn't resolve named SQL Server instances (`Server=HOST\INSTANCE`) the way `Microsoft.Data.SqlClient` does — it needs a literal host/port (e.g. `Server=127.0.0.1,PORT`) instead of relying on SQL Browser (UDP 1434) to resolve the named instance. If `TECHSTORE_RUST_DATABASE_URL` uses a named instance and the service logs "target machine actively refused it" on startup, resolve the instance's dynamic TCP port (`Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL*.<INSTANCE>\MSSQLServer\SuperSocketNetLib\Tcp\IPAll'`) and use that instead.
 
 - Binds `127.0.0.1:7001` by default (loopback-only — deliberate, since there's no auth layer; don't default to `0.0.0.0`).
 - Env vars (no hardcoded fallback except bind address — all of these must be set explicitly or the service refuses to start): `TECHSTORE_RUST_BIND` (default `127.0.0.1:7001`), `TECHSTORE_RUST_DATABASE_URL` (ADO-style SQL Server connection string, **required**, no default), `TECHSTORE_RUST_DB_POOL_SIZE` (default `4`), `TECHSTORE_RUST_CORS_ORIGINS` (comma-separated whitelist; debug builds fall back to `http://localhost:3000,http://localhost:5000`, release builds **require** it set — refuses to start with CORS wide open otherwise).
@@ -167,4 +174,4 @@ feat(gateway): thêm route Ocelot cho notification campaigns admin
 ## Notes
 
 - Uploaded images are served from `/uploads/...`; the project also reads images from the `Image_Shop` and `Picture SP` directories at the repo root.
-- Default ports: Gateway `5000`, APIService `5001`, AuthService `5002`, PHP admin service `5003`, Rust service (`RustService/techstore_rustService`) `7001` (not yet gateway-routed), WebClient dev `3000`.
+- Default ports: Gateway `5000`, APIService `5001`, AuthService `5002`, PHP admin service `5003`, Rust service (`RustService/techstore_rustService`) `7001` (partially gateway-routed — see Rust service section), WebClient dev `3000`.
