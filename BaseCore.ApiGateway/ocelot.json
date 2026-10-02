@@ -103,7 +103,7 @@
       "DownstreamPathTemplate": "/api/banners/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/banners/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
@@ -112,7 +112,7 @@
       "DownstreamPathTemplate": "/api/banners",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/banners",
       "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ]
@@ -319,7 +319,7 @@
       "DownstreamPathTemplate": "/api/settings",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/settings",
       "UpstreamHttpMethod": [ "GET", "PUT", "OPTIONS" ]
@@ -328,7 +328,7 @@
       "DownstreamPathTemplate": "/api/settings/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/settings/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
@@ -337,7 +337,7 @@
       "DownstreamPathTemplate": "/api/admin/notification-templates/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/admin/notification-templates/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
@@ -346,7 +346,7 @@
       "DownstreamPathTemplate": "/api/admin/notification-templates",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/admin/notification-templates",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
@@ -355,7 +355,7 @@
       "DownstreamPathTemplate": "/api/admin/notifications/campaigns/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/admin/notifications/campaigns/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
@@ -364,7 +364,7 @@
       "DownstreamPathTemplate": "/api/admin/notifications/campaigns",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
-        { "Host": "localhost", "Port": 5003 }
+        { "Host": "127.0.0.1", "Port": 5003 }
       ],
       "UpstreamPathTemplate": "/api/admin/notifications/campaigns",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ]
