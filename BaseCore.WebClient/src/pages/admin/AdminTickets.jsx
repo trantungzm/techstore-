@@ -165,11 +165,27 @@ const AdminTickets = () => {
                 }
             }
             
-            await ticketApi.addUpdate(ticketId, {
-                message: noteById[ticketId] || null,
-                statusAfter: newStatus,
-                priorityAfter: priorityById[ticketId] || null,
-            });
+            const note = noteById[ticketId] || null;
+            const newPriority = priorityById[ticketId] || null;
+
+            // Status đổi đi qua endpoint PUT /{id}/status chuyên dụng: không bắt buộc
+            // phải có note (AddUpdate thì bắt buộc), và sinh đúng thông báo "trạng thái
+            // đã thay đổi" thay vì "có phản hồi mới". Priority không có endpoint riêng
+            // nên vẫn đi qua addUpdate như cũ.
+            if (newStatus) {
+                await ticketApi.status(ticketId, { status: newStatus, note });
+                if (newPriority) {
+                    await ticketApi.addUpdate(ticketId, {
+                        message: note || `Cập nhật độ ưu tiên: ${newPriority}`,
+                        priorityAfter: newPriority,
+                    });
+                }
+            } else {
+                await ticketApi.addUpdate(ticketId, {
+                    message: note,
+                    priorityAfter: newPriority,
+                });
+            }
             setNoteById((prev) => ({ ...prev, [ticketId]: '' }));
             setStatusById((prev) => ({ ...prev, [ticketId]: '' }));
             setSelectedTemplateById((prev) => ({ ...prev, [ticketId]: '' }));

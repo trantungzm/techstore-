@@ -371,6 +371,7 @@ export const ticketApi = {
     getPublicByProduct: (productId, params = {}) => api.get(`/tickets/public/by-product/${productId}`, { params }),
     create: (data) => api.post('/tickets', data),
     addUpdate: (id, data) => api.post(`/tickets/${id}/updates`, data),
+    status: (id, data) => api.put(`/tickets/${id}/status`, data),
 };
 // API cho quản lý sửa chữa, bảo hành, v.v.
 export const repairApi = {
