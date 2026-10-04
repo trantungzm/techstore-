@@ -34,6 +34,15 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false,
             }
+            ,
+            // Proxy SignalR hub negotiate & websocket traffic to API Gateway
+            '/techstoreChatHub': {
+                // Directly proxy SignalR hub to API service (5001) in dev
+                target: 'http://localhost:5001',
+                changeOrigin: true,
+                secure: false,
+                ws: true,
+            }
         }
     }
 })

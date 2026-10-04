@@ -377,7 +377,6 @@ export const ticketApi = {
 export const repairApi = {
     getAll: (params = {}) => withItems(api.get('/repairs', { params })),
     getMy: (params = {}) => withItems(api.get('/repairs/my', { params })),
-    getMyById: (id) => api.get(`/repairs/my/${id}`),
     getMyUpdates: (id) => api.get(`/repairs/my/${id}/updates`),
     intake: (data) => api.post('/repairs/intake', data),
     update: (id, data) => {
