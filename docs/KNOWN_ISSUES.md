@@ -77,3 +77,7 @@ Phát sinh từ `npm audit` / `composer audit` / `dotnet list package --vulnerab
 Tính năng ghi `ProductRecommendations` thủ công (admin cấu hình cross-sell tay cho sản phẩm cụ thể) đã bị gỡ cùng đợt cutover Recommendations sang Rust (`PUT /api/recommendations` cũ không có consumer, Rust chỉ đọc theo nguyên tắc data ownership — xem mục 4 phía trên).
 
 Nếu sau này cần lại tính năng này (phổ biến trong e-commerce thật — ghim sản phẩm gợi ý theo chiến dịch/marketing), nên làm ở Rust (thêm khả năng ghi, phá nguyên tắc read-only hiện tại có chủ đích) hoặc PHP admin service (đồng bộ pattern Banner/Settings/Notifications đã quản trị qua PHP) — không nên làm lại ở .NET vì Recommendations đã không còn là service sở hữu bảng này.
+
+## 6. Repairs admin: thiếu màn xem chi tiết/timeline sửa chữa
+
+`GET /api/repairs/{id}` và `GET /api/repairs/{id}/updates` (`RepairsController.cs`, admin-only) có backend nhưng `AdminRepairs.jsx` chưa gọi tới — trang admin hiện chỉ dùng `repairApi.intake` và `repairApi.update`, không có wrapper/call site nào cho 2 endpoint này. Nhiều khả năng là gap tính năng (UI thiếu màn xem chi tiết từng repair case + lịch sử xử lý), không phải dead code nên xoá — **không xoá endpoint**, để lại quyết định khi thiết kế UI cho màn này.
