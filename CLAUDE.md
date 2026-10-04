@@ -62,6 +62,7 @@ Database migrations are **not** applied automatically — `BaseCore.APIService/P
 - Auth uses a custom `JwtMiddleware` (validates the same JWT issued by `BaseCore.AuthService`) applied via `Route::middleware([JwtMiddleware::class])->group(...)`.
 - Connects to the same SQL Server database as the .NET services (`config/database.php`, `sqlsrv` driver). Dev env disables encryption/cert trust (`DB_ENCRYPT=no`, `DB_TRUST_SERVER_CERTIFICATE=yes`).
 - See `services/php-admin-service/laravel/PRODUCTION.md` for production setup notes.
+- On Windows, `php artisan serve` binds IPv4 only (`127.0.0.1`), not `[::1]`. Ocelot routes to this service must use `"Host": "127.0.0.1"` in `ocelot.json`, not `"localhost"` — `localhost` resolves to both `::1` and `127.0.0.1`, and the gateway's HTTP client tries the IPv6 address first, adding ~2s of fallback latency to every request before it gives up and retries on IPv4.
 
 ### Rust service (`RustService/techstore_rustService`)
 
