@@ -11,3 +11,7 @@ build/
 # OS rác
 .DS_Store
 Thumbs.db
+
+# Env
+*.local
+.env.local
