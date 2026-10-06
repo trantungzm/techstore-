@@ -1,6 +1,6 @@
 # Zewvron Rust Service
 
-Backend Rust chay song song voi backend C# cua Zewvron. Service nay doc chung SQL Server database `zewvron`, bind mac dinh port `7001`, va duoc ApiGateway forward qua prefix `/api/rust/*`.
+Backend Rust chay song song voi backend C# cua Zewvron. Service nay doc chung SQL Server database `techstore1`, bind mac dinh port `7001`, va duoc ApiGateway forward qua prefix `/api/rust/*`.
 
 ## Vai tro
 
@@ -49,7 +49,7 @@ http://127.0.0.1:7001
 
 ```powershell
 $env:ZEWVRON_RUST_BIND = "127.0.0.1:7001"
-$env:ZEWVRON_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=zewvron;Integrated Security=true;Encrypt=true;TrustServerCertificate=true"
+$env:ZEWVRON_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore1;Integrated Security=true;Encrypt=true;TrustServerCertificate=true"
 $env:ZEWVRON_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"
 cargo run
 ```
@@ -61,7 +61,7 @@ Service nay chua co auth layer rieng (xem "API hien co" ben duoi) — **khong bi
 Neu process khong dung duoc Windows integrated auth, dung SQL auth:
 
 ```powershell
-$env:ZEWVRON_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=zewvron;User Id=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=true;TrustServerCertificate=true"
+$env:ZEWVRON_RUST_DATABASE_URL = "Server=LUONG-CONG;Database=techstore1;User Id=YOUR_USER;Password=YOUR_PASSWORD;Encrypt=true;TrustServerCertificate=true"
 cargo run
 ```
 

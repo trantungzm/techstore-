@@ -6,7 +6,7 @@
     }
   },
   "ConnectionStrings": {
-    "DefaultConnection": "Server=YOUR_SERVER;Database=zewvron1;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;TrustServerCertificate=True"
+    "DefaultConnection": "Server=YOUR_SERVER;Database=techstore1;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;TrustServerCertificate=True"
   },
   "AppSettings": {
     "IsProduction": false
