@@ -1,9 +1,9 @@
-# Quy ước làm việc nhóm — TechStore (BaseCore)
+# Quy ước làm việc nhóm — Zewvron (Zewvron)
 
 > Tài liệu này quy định cách cả nhóm dùng **Git/GitHub** và **Trello** để đảm bảo
 > tiến độ minh bạch, không bị trừ điểm theo yêu cầu môn Thực tập nhóm CNTT59.
 >
-> Repo: https://github.com/trantungzm/TechStore
+> Repo: https://github.com/trantungzm/Zewvron
 
 ## 1. Thành viên & phân công
 

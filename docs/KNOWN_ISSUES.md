@@ -2,10 +2,10 @@
 
 Việc đã xác nhận là vấn đề thật nhưng **chưa làm** — ghi lại để không quên, không phải danh sách việc cần làm ngay.
 
-## 1. `BaseCore.AuditLog` / `BaseCore.LogService` — chưa từng build được từ commit đầu tiên
+## 1. `Zewvron.AuditLog` / `Zewvron.LogService` — chưa từng build được từ commit đầu tiên
 
-- **Hiện trạng:** `BaseCore.AuditLog` vẫn ở `netcoreapp2.2`, không build được (NU1201: `BaseCore.LogService` không tương thích netcoreapp2.2). `BaseCore.LogService` — dù đã là `net8.0` — **tự nó cũng không build được**, độc lập hoàn toàn với việc migrate TFM: `LogActionService.cs` và `LogErrorService.cs` tham chiếu `MongoRepository<T>`, `IMongoRepository<T>`, `IDbContext` từ namespace `BaseCore.Libs.Repository` — namespace này **chưa từng tồn tại trong repo**, kể cả ở commit tạo LogService đầu tiên (`e0de952`, `a8ef05c`, 2026-06-23; đã xác nhận qua `git log --all -S "namespace BaseCore.Libs.Repository"` và tìm file `MongoRepository.cs`/`IDbContext.cs` từng bị xoá — không có kết quả nào).
-- **Ảnh hưởng thực tế hiện tại:** không có gì — không project nào reference `BaseCore.AuditLog`, không ai chạy nó. Đây là code chết từ khi tạo ra, chưa từng chạy được trong production.
+- **Hiện trạng:** `Zewvron.AuditLog` vẫn ở `netcoreapp2.2`, không build được (NU1201: `Zewvron.LogService` không tương thích netcoreapp2.2). `Zewvron.LogService` — dù đã là `net8.0` — **tự nó cũng không build được**, độc lập hoàn toàn với việc migrate TFM: `LogActionService.cs` và `LogErrorService.cs` tham chiếu `MongoRepository<T>`, `IMongoRepository<T>`, `IDbContext` từ namespace `Zewvron.Libs.Repository` — namespace này **chưa từng tồn tại trong repo**, kể cả ở commit tạo LogService đầu tiên (`e0de952`, `a8ef05c`, 2026-06-23; đã xác nhận qua `git log --all -S "namespace Zewvron.Libs.Repository"` và tìm file `MongoRepository.cs`/`IDbContext.cs` từng bị xoá — không có kết quả nào).
+- **Ảnh hưởng thực tế hiện tại:** không có gì — không project nào reference `Zewvron.AuditLog`, không ai chạy nó. Đây là code chết từ khi tạo ra, chưa từng chạy được trong production.
 - **Cần quyết định trước khi đầu tư sửa:** có tiếp tục dùng MongoDB cho audit log (cần viết mới `MongoRepository<T>`/`IDbContext`/`IMongoRepository<T>` — kết nối, cấu hình, error handling thật) hay đổi sang SQL Server cho đồng bộ với phần còn lại của hệ thống. Đây là quyết định kiến trúc, không phải chỗ nên tự đoán khi sửa lỗi.
 - **Không gấp** — không ai đang phụ thuộc vào service này.
 
@@ -31,7 +31,7 @@ Việc đã xác nhận là vấn đề thật nhưng **chưa làm** — ghi l�
 - ✅ `System.Text.Json` 4.7.2 (transitive qua Azure.Identity/Microsoft.Data.SqlClient) → 8.0.6, ở APIService/AuthService/Repository/Services
 - ✅ `Microsoft.Extensions.Caching.Memory` 8.0.0 → 8.0.1, cùng 4 project trên
 - ✅ `System.Formats.Asn1` 5.0.0 → 8.0.2, cùng 4 project trên
-- ✅ `Snappier` (BaseCore.LogService) 1.0.0 → **1.3.1** (không phải 1.0.1 như audit ban đầu ghi — advisory High mới hơn CVE-2026-44302, infinite loop khi decompress stream lỗi định dạng, chỉ được vá từ bản 1.3.1; đã xác nhận qua `dotnet restore` cảnh báo NU1903 trước khi nâng)
+- ✅ `Snappier` (Zewvron.LogService) 1.0.0 → **1.3.1** (không phải 1.0.1 như audit ban đầu ghi — advisory High mới hơn CVE-2026-44302, infinite loop khi decompress stream lỗi định dạng, chỉ được vá từ bản 1.3.1; đã xác nhận qua `dotnet restore` cảnh báo NU1903 trước khi nâng)
 - Cả 4 gói đều là transitive dependency (không project nào khai báo trực tiếp) — elevate bằng cách thêm `PackageReference` tường minh vào từng project bị ảnh hưởng, không sửa gì khác.
 
 ### 2b. `vite` — major bump 5.x → 8.x, để riêng chờ quyết định
@@ -66,7 +66,7 @@ Phát sinh từ `npm audit` / `composer audit` / `dotnet list package --vulnerab
 
 **Đã xử lý** trên nhánh `feature/wire-rust-gateway` (2026-10-01), commit `a3b62f1` + `b89ae58`.
 
-- **Bug:** `BaseCore.APIService/Controllers/RecommendationsController.cs:71` (action `GetAutoCrossSell`) dùng `x.Stock > 0` trong LINQ, với `Stock` là computed property (`get => TotalStock ?? 0`) trên entity `Product`. EF Core không dịch được biểu thức này sang SQL cho câu query cụ thể này, ném `InvalidOperationException: Translation of member 'Stock' on entity type 'Product' failed`.
+- **Bug:** `Zewvron.APIService/Controllers/RecommendationsController.cs:71` (action `GetAutoCrossSell`) dùng `x.Stock > 0` trong LINQ, với `Stock` là computed property (`get => TotalStock ?? 0`) trên entity `Product`. EF Core không dịch được biểu thức này sang SQL cho câu query cụ thể này, ném `InvalidOperationException: Translation of member 'Stock' on entity type 'Product' failed`.
 - **Mức độ:** nghiêm trọng trên thực tế — `ProductRecommendations` rỗng hoàn toàn (xác nhận qua `sqlcmd`), nên **100% request** gọi `GET /api/recommendations/auto-cross-sell` đều rơi vào nhánh fallback chứa LINQ lỗi này, trả về HTTP 400 cho mọi sản phẩm. Tính năng "gợi ý tự động" đã chết từ trước khi có bất kỳ thay đổi nào trong đợt cutover — không phải do thay đổi lần này gây ra, chỉ là được phát hiện trong lúc so sánh output .NET vs Rust trước khi cutover (test 14 product ID, 14/14 đều lỗi 400).
 - **Cách phát hiện:** so sánh output thật giữa .NET (`:5001`) và Rust (`:7001`) cho cùng 14 product ID đa dạng category/tồn kho trước khi cutover — phát hiện .NET luôn 400 còn Rust luôn 200 với dữ liệu hợp lý.
 - **Cách xử lý:** không vá bug .NET riêng lẻ — cutover thẳng route `/api/recommendations/cross-sell` và `/auto-cross-sell` sang RustService (đã có logic lọc/sắp xếp tương đương, viết bằng SQL trực tiếp nên không gặp lỗi dịch LINQ), sau đó xoá hẳn `RecommendationsController.cs`. Ghi lại ở đây để không bị hiểu lầm là "xoá code đang chạy tốt" — controller này đã crash từ trước khi bị xoá.

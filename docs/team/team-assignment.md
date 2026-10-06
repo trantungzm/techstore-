@@ -1,8 +1,8 @@
-# Phân công nhóm - TechStore (BaseCore)
+# Phân công nhóm - Zewvron (Zewvron)
 
 ## Thông tin nhóm
-- Repository: https://github.com/trantungzm/techstore-
-- Mục tiêu: Xây dựng hệ thống TechStore theo kiến trúc BaseCore (APIService/AuthService/ApiGateway/WebClient) và vận hành bằng SQL Server.
+- Repository: https://github.com/trantungzm/zewvron-
+- Mục tiêu: Xây dựng hệ thống Zewvron theo kiến trúc Zewvron (APIService/AuthService/ApiGateway/WebClient) và vận hành bằng SQL Server.
 
 ## Thành viên & vai trò
 

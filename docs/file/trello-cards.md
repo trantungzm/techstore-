@@ -1,4 +1,4 @@
-# Danh sách card Trello — TechStore (lộ trình 5 tuần)
+# Danh sách card Trello — Zewvron (lộ trình 5 tuần)
 
 Card được nhóm theo **tuần**. Mỗi dòng là 1 card.
 Định dạng: `[Module] Việc` — **(Người phụ trách)** — `Label`
