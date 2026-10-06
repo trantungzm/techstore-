@@ -49,6 +49,8 @@ Standard flow for a new API feature in the .NET side: Entity (`Zewvron.Entities`
 
 Database migrations are **not** applied automatically — `Zewvron.APIService/Program.cs` only calls `db.Database.Migrate()` when `Database:AutoMigrateOnStartup` is explicitly set to `true` in config. Apply schema changes deliberately.
 
+The rename changed the ASP.NET DataProtection application names (`Zewvron.AuthService` and `Zewvron.APIService`). Previously issued protected tokens/cookies are no longer valid; users must sign in again. The SQL Server database name was not changed and remains `techstore1`.
+
 ### Frontend (`Zewvron.WebClient`)
 
 - React 18 + React Router 7 + Vite 5 + Tailwind CSS 4, Axios for HTTP, `@microsoft/signalr` for the chat/notifications hub.
@@ -116,7 +118,7 @@ php artisan test --filter=TestName            # single test
 
 ```bash
 cd RustService/zewvron_rustService
-$env:ZEWVRON_RUST_DATABASE_URL = "Server=...;Database=zewvron;..."   # required, no default
+$env:ZEWVRON_RUST_DATABASE_URL = "Server=...;Database=techstore1;..."   # required, no default
 $env:ZEWVRON_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"  # required in release builds
 cargo run          # :7001, loopback only by default
 cargo build --release
