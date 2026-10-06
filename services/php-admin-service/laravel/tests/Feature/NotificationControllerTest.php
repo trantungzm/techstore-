@@ -98,6 +98,8 @@ class NotificationControllerTest extends TestCase
         $secret = 'test-secret-key-for-phpunit';
         $header = $this->base64UrlEncode(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
         $payload = $this->base64UrlEncode(json_encode([
+            'iss' => 'Zewvron',
+            'aud' => 'Zewvron.WebClient',
             'role' => 'Admin',
             'unique_name' => 'tester',
             'exp' => time() + 3600,
