@@ -45,7 +45,7 @@ Mac dinh service bind (khong can set gi):
 http://127.0.0.1:7001
 ```
 
-`ZEWVRON_RUST_DATABASE_URL` va `ZEWVRON_RUST_CORS_ORIGINS` **bat buoc phai set** — service khong con connection string mac dinh hardcode, se bao loi ro rang va khong start neu thieu bien nao (rieng `ZEWVRON_RUST_CORS_ORIGINS` debug build co fallback origin dev, xem phan CORS ben duoi).
+Các biến môi trường dùng tiền tố `ZEWVRON_RUST_`; file `.env` cục bộ cũng phải dùng đúng tên này. `ZEWVRON_RUST_DATABASE_URL` và `ZEWVRON_RUST_CORS_ORIGINS` **bắt buộc phải set** — service không còn connection string mặc định hardcode, sẽ báo lỗi rõ ràng và không start nếu thiếu biến nào (riêng `ZEWVRON_RUST_CORS_ORIGINS` debug build có fallback origin dev, xem phần CORS bên dưới).
 
 ```powershell
 $env:ZEWVRON_RUST_BIND = "127.0.0.1:7001"
