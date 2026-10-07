@@ -16,6 +16,7 @@ dist/
 build/
 dist-temp/
 dist-temp-inventory/
+Zewvron.ApiGateway/wwwroot/
 *.timestamp-*.mjs
 *.zip
 .DS_Store

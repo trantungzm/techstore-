@@ -34,6 +34,8 @@ npm run build
 
 The build output goes to `Zewvron.ApiGateway/wwwroot`. To run Vite separately, start the gateway and APIService first, then run `npm run dev`; Vite proxies `/api` to port 5000 and `/zewvronChatHub` to APIService on port 5001.
 
+`Zewvron.ApiGateway/wwwroot` is gitignored (build output only) — the `npm run build` step above is required at least once before the gateway can serve the SPA; without it there's nothing at `/`.
+
 ## Run backend services
 
 From the repository root, start the .NET services in separate terminals:

@@ -57,6 +57,7 @@ The rename changed the ASP.NET DataProtection application names (`Zewvron.AuthSe
 - Admin pages live in `src/pages/admin/`; routes are registered in `src/App.jsx` and gated with `<ProtectedRoute allowedRoles={[...]}>`.
 - `vite.config.js` proxies `/api` to the gateway and `/zewvronChatHub` directly to the APIService (port 5001) in dev, since SignalR needs a direct WS connection.
 - Building (`npm run build`) outputs into `Zewvron.ApiGateway/wwwroot` — rebuild after frontend changes if testing through the gateway rather than the Vite dev server.
+- `Zewvron.ApiGateway/wwwroot/` is gitignored (build output, not source) — on a fresh clone it won't exist, so run `npm run build` in `Zewvron.WebClient/` at least once before the gateway can serve the SPA, or it'll 404/serve nothing at `/`.
 
 ### PHP service (`services/php-admin-service/laravel`)
 
