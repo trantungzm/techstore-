@@ -1,69 +1,74 @@
-# TechStore
+# Zewvron
 
-Du an TechStore gom frontend React/Vite va cac backend service xay dung tren .NET.
+Zewvron is an e-commerce application with a React/Vite frontend and .NET, Laravel, and Rust backend services.
 
-## Cau truc chinh
+## Main projects
 
-- `BaseCore.WebClient`: giao dien nguoi dung va trang quan tri
-- `BaseCore.ApiGateway`: gateway phuc vu frontend build va route API
-- `BaseCore.APIService`: service chinh cho san pham, don hang, banner, upload anh
-- `BaseCore.AuthService`: xac thuc va quan ly nguoi dung
-- `BaseCore.Repository`, `BaseCore.Services`, `BaseCore.Entities`, `BaseCore.DTO`: cac tang du lieu va nghiep vu dung chung
+- `Zewvron.WebClient` — React/Vite storefront and admin UI.
+- `Zewvron.ApiGateway` — Ocelot gateway and host for the built frontend.
+- `Zewvron.APIService` — product, order, inventory, and SignalR APIs.
+- `Zewvron.AuthService` — authentication and user APIs.
+- `services/php-admin-service/laravel` — admin APIs for banners, settings, and notification templates.
+- `RustService/zewvron_rustService` — read-only product comparison, recommendation, and search APIs.
 
-## Cong nghe su dung
+All services use the existing SQL Server database `techstore1`. The project rename did not rename the database.
 
-- Frontend: React, Vite, Tailwind CSS, Axios
-- Backend: ASP.NET Core, Entity Framework Core
-- Khac: SignalR, Ocelot
+## Default local ports
 
-## Lo trinh da service
+| Service | Port |
+| --- | ---: |
+| Vite frontend | 3000 |
+| API Gateway | 5000 |
+| APIService | 5001 |
+| AuthService | 5002 |
+| PHP admin service | 5003 |
+| Rust service | 7001 |
 
-Du an dang duoc chuan bi cho lo trinh tach mot so module backend sang nhieu ngon ngu:
+## Build the frontend
 
-- `PHP`: `Banner`, `Settings`, `Notifications admin`
-- `Rust`: `Recommendations`, `Notifications worker`
-- `.NET`: giu `Auth`, `Orders`, `Inventory`, `Products` va cac module loi
-
-Tai lieu lien quan:
-
-- `docs/architecture/multi-service-migration-plan.md`
-- `docs/architecture/notification-outbox-design.md`
-
-Khung service moi:
-
-- `services/php-admin-service`
-- `RustService/techstore_rustService`
-
-## Cach chay frontend
-
-Tai thu muc `BaseCore.WebClient`:
-
-```bash
-npm install
-npm run dev
-```
-
-Mac dinh frontend chay o cong `3000`.
-
-## Cach build frontend
-
-Tai thu muc `BaseCore.WebClient`:
-
-```bash
+```powershell
+cd Zewvron.WebClient
+npm ci
 npm run build
 ```
 
-Ban build se duoc dua vao `BaseCore.ApiGateway/wwwroot`.
+The build output goes to `Zewvron.ApiGateway/wwwroot`. To run Vite separately, start the gateway and APIService first, then run `npm run dev`; Vite proxies `/api` to port 5000 and `/zewvronChatHub` to APIService on port 5001.
 
-## Cac cong mac dinh
+`Zewvron.ApiGateway/wwwroot` is gitignored (build output only) — the `npm run build` step above is required at least once before the gateway can serve the SPA; without it there's nothing at `/`.
 
-- Gateway: `http://localhost:5000`
-- APIService: `http://localhost:5001`
-- AuthService: `http://localhost:5002`
-- WebClient dev: `http://localhost:3000`
+## Run backend services
 
-## Ghi chu
+`Zewvron.AuthService` and `Zewvron.APIService` require the `JWT_SECRET` environment variable to be set before starting — they read it directly (`Program.cs`) and it overrides config; `Jwt:SecretKey` is never committed to `appsettings.json`, so without `JWT_SECRET` set both services throw on startup. Use the same value as `JWT_SECRET` in `services/php-admin-service/laravel/.env` so tokens validate across services.
 
-- Anh upload duoc phuc vu qua duong dan `/uploads/...`
-- Du an hien co ho tro doc anh tu cac thu muc `Image_Shop` va `Picture SP`
-- Neu thay doi frontend ma chay qua gateway, hay build lai de cap nhat `wwwroot`
+From the repository root, start the .NET services in separate terminals:
+
+```powershell
+$env:JWT_SECRET = "..."   # same value as services/php-admin-service/laravel/.env's JWT_SECRET
+dotnet run --project Zewvron.ApiGateway
+dotnet run --project Zewvron.APIService
+dotnet run --project Zewvron.AuthService
+```
+
+Start PHP admin service:
+
+```powershell
+cd services/php-admin-service/laravel
+php artisan serve --host=127.0.0.1 --port=5003
+```
+
+Start Rust — it does **not** load `.env` files, so export `ZEWVRON_RUST_DATABASE_URL` and (for release builds) `ZEWVRON_RUST_CORS_ORIGINS` as real environment variables in the same shell session before running `cargo`:
+
+```powershell
+cd RustService/zewvron_rustService
+$env:ZEWVRON_RUST_DATABASE_URL = "Server=...;Database=techstore1;...;TrustServerCertificate=true"
+$env:ZEWVRON_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"
+cargo run
+```
+
+Dev SQL Server uses a self-signed certificate, so the connection string needs `TrustServerCertificate=true` or `tiberius` rejects the login with a certificate-trust error. This is required even with `Encrypt=false` — SQL Server's login packet is always TLS-encrypted regardless of `Encrypt`.
+
+Rust reads `techstore1` and does not run migrations or write to the database. Its endpoints are exposed through the gateway under `/api/rust/*`.
+
+## Rename and token note
+
+The ASP.NET DataProtection application names changed with the service rename. Previously issued protected tokens/cookies are no longer valid and users must sign in again. The SQL Server database remains `techstore1`.

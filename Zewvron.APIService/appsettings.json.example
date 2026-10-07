@@ -1,0 +1,22 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=YOUR_SERVER;Database=techstore1;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=False;TrustServerCertificate=True"
+  },
+  "Jwt": {
+    "Issuer": "Zewvron",
+    "Audience": "Zewvron.WebClient"
+  },
+  "Database": {
+    "AutoMigrateOnStartup": false
+  },
+  "Notifications": {
+    "Mode": "DirectWrite"
+  }
+}

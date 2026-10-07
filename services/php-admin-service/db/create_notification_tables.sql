@@ -6,7 +6,7 @@ SET CONCAT_NULL_YIELDS_NULL ON;
 SET ARITHABORT ON;
 
 -- Schema owned by services/php-admin-service (see docs/architecture/notification-outbox-design.md).
--- Idempotent: safe to re-run against the shared `techStore1` database.
+-- Idempotent: safe to re-run against the shared `zewvron1` database.
 
 IF OBJECT_ID(N'[dbo].[NotificationTemplates]', N'U') IS NULL
 BEGIN
@@ -70,4 +70,4 @@ BEGIN
 END
 
 -- Example (sqlcmd):
--- sqlcmd -S .\SQLEXPRESS -d techStore1 -i create_notification_tables.sql
+-- sqlcmd -S .\SQLEXPRESS -d zewvron1 -i create_notification_tables.sql

@@ -15,9 +15,9 @@ Tai lieu nay dong vai tro "phase 1" cho lo trinh tach mot phan backend hien tai 
 WebClient
    |
    v
-BaseCore.ApiGateway
-   |----> BaseCore.AuthService (.NET)
-   |----> BaseCore.APIService (.NET)
+Zewvron.ApiGateway
+   |----> Zewvron.AuthService (.NET)
+   |----> Zewvron.APIService (.NET)
    |----> tech-php-admin-service (PHP)
    \----> tech-rust-backend-service (Rust)
 ```
@@ -115,7 +115,7 @@ BaseCore.ApiGateway
 
 ### Giai doan 3 — Da hoan tat
 
-- Tao `RustService/techstore_rustService` (PR #27).
+- Tao `RustService/zewvron_rustService` (PR #27).
 - Chuyen `Recommendations` (cross-sell, auto-cross-sell) — route qua gateway, `RecommendationsController.cs`
   cu ben .NET da xoa (commit `b89ae58`). Cutover nay dong thoi fix mot bug production co san:
   ban .NET crash 100% request auto-cross-sell do EF Core khong dich duoc LINQ (commit `a3b62f1`).

@@ -53,6 +53,19 @@ class JwtMiddleware
             return response()->json(['message' => 'Token expired'], 401);
         }
 
+        $expectedIssuer = env('JWT_ISSUER', '');
+        $expectedAudience = env('JWT_AUDIENCE', '');
+        $actualAudience = $payloadData['aud'] ?? null;
+        $audienceMatches = is_string($actualAudience)
+            ? hash_equals($expectedAudience, $actualAudience)
+            : (is_array($actualAudience) && in_array($expectedAudience, $actualAudience, true));
+
+        if ($expectedIssuer === '' || $expectedAudience === ''
+            || !isset($payloadData['iss']) || !hash_equals($expectedIssuer, (string) $payloadData['iss'])
+            || !$audienceMatches) {
+            return response()->json(['message' => 'Invalid token issuer or audience'], 401);
+        }
+
         $request->attributes->set('claims', $payloadData);
         return $next($request);
     }

@@ -1,7 +1,7 @@
 # Inventory Management Module
 
 ## Tổng quan
-Module quản trị kho trong dự án BaseCore quản lý:
+Module quản trị kho trong dự án Zewvron quản lý:
 - Nhập hàng (goods receipts)
 - Quản lý tồn kho theo serial/IMEI
 - Tra cứu hàng tồn, kiểm kê, hàng lâu tồn (aged stock)
@@ -13,7 +13,7 @@ Module quản trị kho trong dự án BaseCore quản lý:
 ## Thành phần chính
 
 ### Backend
-- `BaseCore.APIService.Controllers.InventoryController.cs`
+- `Zewvron.APIService.Controllers.InventoryController.cs`
   - Route chính: `api/inventory`
   - Các endpoint quan trọng:
     - `POST /inventory/receipts` - tạo phiếu nhập kho
@@ -36,7 +36,7 @@ Module quản trị kho trong dự án BaseCore quản lý:
     - `Admin`, `Warehouse`, `Technical` được phép xem danh sách và tra cứu stock item
     - `Admin`, `Technical` được phép tạo và xử lý trả hàng
 
-- `BaseCore.Services.InventoryService.cs`
+- `Zewvron.Services.InventoryService.cs`
   - Cài đặt logic nghiệp vụ cho module kho.
   - Xử lý validate và tạo `GoodsReceipt`, `StockItem`, `StockMovement`, `InventoryReturn`.
   - Cập nhật số lượng và trạng thái sản phẩm/variant.
@@ -46,10 +46,10 @@ Module quản trị kho trong dự án BaseCore quản lý:
     - Receipt: `GR-{yyyyMMdd}-{id}`
     - Return: `RT-{yyyyMMdd}-{id}`
 
-- `BaseCore.Services.IInventoryService.cs`
+- `Zewvron.Services.IInventoryService.cs`
   - Định nghĩa API service để controller sử dụng.
 
-- `BaseCore.DTO.Inventory.InventoryDtos.cs`
+- `Zewvron.DTO.Inventory.InventoryDtos.cs`
   - Định nghĩa tất cả DTO đầu vào / đầu ra liên quan đến kho:
     - `CreateGoodsReceiptDto`, `GoodsReceiptDto`, `GoodsReceiptLineDto`
     - `StockItemDto`, `StockItemLookupDto`, `UpdateStockItemStatusDto`, `AssignStockItemsDto`
@@ -58,7 +58,7 @@ Module quản trị kho trong dự án BaseCore quản lý:
     - `StockMovementDto`
     - `InventorySearchDto`, `InventoryReturnSearchDto`, `AgedStockSearchDto`
 
-- `BaseCore.Repository.EFCore.InventoryRepository.cs`
+- `Zewvron.Repository.EFCore.InventoryRepository.cs`
   - Repository truy cập dữ liệu cho thành phần kho.
   - Tìm kiếm stock item, nhận hàng, trả hàng, aged stock, movement.
 
@@ -94,7 +94,7 @@ Module quản trị kho trong dự án BaseCore quản lý:
 
 ## Frontend liên quan
 
-### `BaseCore.WebClient/src/pages/AdminInventory.jsx`
+### `Zewvron.WebClient/src/pages/AdminInventory.jsx`
 - Trang quản trị kho cho Admin/Warehouse/Technical.
 - Hiển thị:
   - menu điều hướng nhập kho / trả hàng
@@ -107,7 +107,7 @@ Module quản trị kho trong dự án BaseCore quản lý:
   - `serialValidation` để kiểm tra file serial và serial nhập thủ công
   - phân quyền hiển thị: chỉ Admin/Warehouse mới thấy phần nhập kho, Admin/Technical thấy phần trả hàng
 
-### `BaseCore.WebClient/src/services/api.js`
+### `Zewvron.WebClient/src/services/api.js`
 - `inventoryApi` sử dụng các endpoint backend:
   - `createReceipt`
   - `getStockItems`
@@ -151,14 +151,14 @@ Module quản trị kho trong dự án BaseCore quản lý:
 - `RestockReturnAsync` chỉ cho phép với trả hàng đã duyệt (`Approved`).
 
 ## File liên quan
-- `BaseCore.APIService/Controllers/InventoryController.cs`
-- `BaseCore.Services/InventoryService.cs`
-- `BaseCore.Services/IInventoryService.cs`
-- `BaseCore.DTO/Inventory/InventoryDtos.cs`
-- `BaseCore.Repository/EFCore/InventoryRepository.cs`
-- `BaseCore.WebClient/src/pages/AdminInventory.jsx`
-- `BaseCore.WebClient/src/services/api.js`
-- `database/sync_techstore_inventory_schema.sql`
+- `Zewvron.APIService/Controllers/InventoryController.cs`
+- `Zewvron.Services/InventoryService.cs`
+- `Zewvron.Services/IInventoryService.cs`
+- `Zewvron.DTO/Inventory/InventoryDtos.cs`
+- `Zewvron.Repository/EFCore/InventoryRepository.cs`
+- `Zewvron.WebClient/src/pages/AdminInventory.jsx`
+- `Zewvron.WebClient/src/services/api.js`
+- `database/sync_zewvron_inventory_schema.sql`
 
 ## Kết luận
-Module kho của BaseCore hiện đã hỗ trợ đủ luồng nhập kho, theo dõi serial, gán hàng cho đơn, kiểm kê tồn lâu, và xử lý trả hàng. Nếu cần, tôi có thể tiếp tục mở rộng bằng sơ đồ Use Case hoặc tạo tài liệu HTML/chi tiết cụ thể cho từng API endpoint.
+Module kho của Zewvron hiện đã hỗ trợ đủ luồng nhập kho, theo dõi serial, gán hàng cho đơn, kiểm kê tồn lâu, và xử lý trả hàng. Nếu cần, tôi có thể tiếp tục mở rộng bằng sơ đồ Use Case hoặc tạo tài liệu HTML/chi tiết cụ thể cho từng API endpoint.

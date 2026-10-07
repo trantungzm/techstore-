@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Quartz" Version="3.8.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.7.10" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    <PackageReference Include="System.Formats.Asn1" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Zewvron.Common\Zewvron.Common.csproj" />
+    <ProjectReference Include="..\Zewvron.DTO\Zewvron.DTO.csproj" />
+    <ProjectReference Include="..\Zewvron.Entities\Zewvron.Entities.csproj" />
+    <ProjectReference Include="..\Zewvron.Repository\Zewvron.Repository.csproj" />
+  </ItemGroup>
+
+</Project>

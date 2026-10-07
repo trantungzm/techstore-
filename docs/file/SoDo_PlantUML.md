@@ -15,7 +15,7 @@
 
 ```plantuml
 @startwbs
-* TechStore
+* Zewvron
 ** 1. Quản lý sản phẩm
 *** Tìm kiếm sản phẩm
 *** Lọc theo thông số
@@ -200,7 +200,7 @@ actor "Đối tác vận chuyển" as S
 
 C --|> G
 
-rectangle "HỆ THỐNG TECHSTORE" {
+rectangle "HỆ THỐNG ZEWVRON" {
   usecase "Đăng nhập / Đăng xuất\nĐổi mật khẩu / Cập nhật hồ sơ" as UG
   usecase "Mua sắm & Giao dịch\n(tìm kiếm, so sánh, đặt hàng,\nthanh toán, theo dõi đơn)" as UC_SHOP
   usecase "Bảo hành & Hỗ trợ\n(tra cứu, yêu cầu BH, ticket)" as UC_WAR
