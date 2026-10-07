@@ -38,9 +38,12 @@ The build output goes to `Zewvron.ApiGateway/wwwroot`. To run Vite separately, s
 
 ## Run backend services
 
+`Zewvron.AuthService` and `Zewvron.APIService` require the `JWT_SECRET` environment variable to be set before starting — they read it directly (`Program.cs`) and it overrides config; `Jwt:SecretKey` is never committed to `appsettings.json`, so without `JWT_SECRET` set both services throw on startup. Use the same value as `JWT_SECRET` in `services/php-admin-service/laravel/.env` so tokens validate across services.
+
 From the repository root, start the .NET services in separate terminals:
 
 ```powershell
+$env:JWT_SECRET = "..."   # same value as services/php-admin-service/laravel/.env's JWT_SECRET
 dotnet run --project Zewvron.ApiGateway
 dotnet run --project Zewvron.APIService
 dotnet run --project Zewvron.AuthService

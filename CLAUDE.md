@@ -92,10 +92,12 @@ npm run preview
 
 ### .NET services (run from the repo root or the individual project directory)
 
+`Zewvron.AuthService` and `Zewvron.APIService` both read the JWT signing secret from the `JWT_SECRET` environment variable at startup (`Program.cs`, overrides whatever is in `appsettings.json`/config — `Jwt:SecretKey` is intentionally never committed). Set it before `dotnet run` or they throw `InvalidOperationException: Jwt:SecretKey chưa được cấu hình` immediately. Use the same value as PHP's `JWT_SECRET` in `services/php-admin-service/laravel/.env` so tokens issued by AuthService validate on the PHP admin routes too. The standard ASP.NET Core config-binding env var `Jwt__SecretKey` (double underscore) also works and is honored if `JWT_SECRET` isn't set, but `JWT_SECRET` is the one the code and this doc expect.
+
 ```bash
 dotnet run --project Zewvron.ApiGateway     # :5000
-dotnet run --project Zewvron.APIService     # :5001
-dotnet run --project Zewvron.AuthService    # :5002
+dotnet run --project Zewvron.APIService     # :5001, requires JWT_SECRET env var set
+dotnet run --project Zewvron.AuthService    # :5002, requires JWT_SECRET env var set
 dotnet build                                  # build a single project from within its directory
 ```
 
