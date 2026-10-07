@@ -56,12 +56,16 @@ cd services/php-admin-service/laravel
 php artisan serve --host=127.0.0.1 --port=5003
 ```
 
-Start Rust (configure its local `.env` with `ZEWVRON_RUST_DATABASE_URL` and, for release builds, `ZEWVRON_RUST_CORS_ORIGINS`):
+Start Rust — it does **not** load `.env` files, so export `ZEWVRON_RUST_DATABASE_URL` and (for release builds) `ZEWVRON_RUST_CORS_ORIGINS` as real environment variables in the same shell session before running `cargo`:
 
 ```powershell
 cd RustService/zewvron_rustService
+$env:ZEWVRON_RUST_DATABASE_URL = "Server=...;Database=techstore1;...;TrustServerCertificate=true"
+$env:ZEWVRON_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"
 cargo run
 ```
+
+Dev SQL Server uses a self-signed certificate, so the connection string needs `TrustServerCertificate=true` or `tiberius` rejects the login with a certificate-trust error. This is required even with `Encrypt=false` — SQL Server's login packet is always TLS-encrypted regardless of `Encrypt`.
 
 Rust reads `techstore1` and does not run migrations or write to the database. Its endpoints are exposed through the gateway under `/api/rust/*`.
 

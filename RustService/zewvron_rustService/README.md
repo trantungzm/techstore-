@@ -45,7 +45,12 @@ Mac dinh service bind (khong can set gi):
 http://127.0.0.1:7001
 ```
 
-Các biến môi trường dùng tiền tố `ZEWVRON_RUST_`; file `.env` cục bộ cũng phải dùng đúng tên này. `ZEWVRON_RUST_DATABASE_URL` và `ZEWVRON_RUST_CORS_ORIGINS` **bắt buộc phải set** — service không còn connection string mặc định hardcode, sẽ báo lỗi rõ ràng và không start nếu thiếu biến nào (riêng `ZEWVRON_RUST_CORS_ORIGINS` debug build có fallback origin dev, xem phần CORS bên dưới).
+Các biến môi trường dùng tiền tố `ZEWVRON_RUST_`. **Service này không đọc file `.env`** — không có crate `dotenv`/`dotenvy` nào trong `Cargo.toml`, chỉ đọc biến môi trường thật của process (`std::env::var`). Một file `.env` nằm trong thư mục này (nếu có) hoàn toàn không có tác dụng với `cargo run`/binary đã build — phải export các biến vào môi trường của tiến trình trước khi chạy, bằng một trong các cách:
+- Shell: `$env:ZEWVRON_RUST_DATABASE_URL = "..."` (PowerShell) rồi `cargo run` trong **cùng session** đó.
+- Script khởi động đọc `.env` và export thủ công (ví dụ `Get-Content .env | ... | Set-Item -Path Env:...`), vì bản thân binary không tự làm việc này.
+- Biến môi trường container khi deploy bằng Docker (`environment:`/`env_file:` trong compose) — Docker tiêm trực tiếp vào môi trường process bên trong container, đây **không phải** Rust đọc `.env`, mà là runtime container làm việc đó trước khi binary khởi động.
+
+`ZEWVRON_RUST_DATABASE_URL` và `ZEWVRON_RUST_CORS_ORIGINS` **bắt buộc phải set** — service không còn connection string mặc định hardcode, sẽ báo lỗi rõ ràng và không start nếu thiếu biến nào (riêng `ZEWVRON_RUST_CORS_ORIGINS` debug build có fallback origin dev, xem phần CORS bên dưới).
 
 ```powershell
 $env:ZEWVRON_RUST_BIND = "127.0.0.1:7001"
@@ -54,7 +59,7 @@ $env:ZEWVRON_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"
 cargo run
 ```
 
-Khuyen nghi `Encrypt=true`. Chi dung `Encrypt=false` khi may dev khong co cert SQL Server hop le va biet ro dang chay trong mang noi bo tin cay (khong encrypt = du lieu + password (neu dung SQL auth) di qua ket noi TCP dang plain text).
+**Chuỗi kết nối dev cần `TrustServerCertificate=true`**, vì SQL Server dev dùng chứng chỉ tự ký (self-signed) — `tiberius` sẽ từ chối kết nối với lỗi "certificate chain... terminated in a root certificate which is not trusted" nếu thiếu cờ này. Lưu ý: `Encrypt=false` **không** loại bỏ TLS hoàn toàn — gói tin login (TDS login packet) của SQL Server luôn bắt buộc mã hoá TLS bất kể `Encrypt`, nên vẫn cần `TrustServerCertificate=true` để handshake lúc đăng nhập đi qua được, dù các gói tin sau đó có mã hoá hay không. Khuyến nghị `Encrypt=true;TrustServerCertificate=true` cho dev.
 
 Service nay chua co auth layer rieng (xem "API hien co" ben duoi) — **khong bind `0.0.0.0`** tru khi thuc su can (vd. chay trong container co network isolation rieng, va host/security group da chan truy cap tu ngoai vao port nay). Neu bat buoc phai bind `0.0.0.0`, dam bao firewall/security group chan port 7001 khoi internet truoc.
 

@@ -70,9 +70,11 @@ The rename changed the ASP.NET DataProtection application names (`Zewvron.AuthSe
 
 ### Rust service (`RustService/zewvron_rustService`)
 
-This is the only active Rust service. Axum + `tiberius` (SQL Server driver), reads the same `techstore1` database directly (no writes, no migrations). Its local `.env` uses the `ZEWVRON_RUST_*` variable prefix. Currently exposes 5 read-only routes under `/api/rust` (Product Compare, Recommendations, Search Suggestions), so no auth layer exists in this service at all. **All three are wired into `ocelot.json`** and reachable through the gateway — Product Compare and Search Suggestions are new functionality with no .NET equivalent; Recommendations fully replaced the old .NET `RecommendationsController` (see the route ownership note above), which has been deleted.
+This is the only active Rust service. Axum + `tiberius` (SQL Server driver), reads the same `techstore1` database directly (no writes, no migrations). Env vars use the `ZEWVRON_RUST_*` prefix — **the service does not load `.env` files** (no `dotenv`/`dotenvy` crate in `Cargo.toml`), it only reads real process environment variables (`std::env::var`). A `.env` file sitting next to the binary has no effect; export `ZEWVRON_RUST_*` into the shell/script/Docker env that actually launches the process before running `cargo run`. Currently exposes 5 read-only routes under `/api/rust` (Product Compare, Recommendations, Search Suggestions), so no auth layer exists in this service at all. **All three are wired into `ocelot.json`** and reachable through the gateway — Product Compare and Search Suggestions are new functionality with no .NET equivalent; Recommendations fully replaced the old .NET `RecommendationsController` (see the route ownership note above), which has been deleted.
 
 `tiberius` doesn't resolve named SQL Server instances (`Server=HOST\INSTANCE`) the way `Microsoft.Data.SqlClient` does — it needs a literal host/port (e.g. `Server=127.0.0.1,PORT`) instead of relying on SQL Browser (UDP 1434) to resolve the named instance. If `ZEWVRON_RUST_DATABASE_URL` uses a named instance and the service logs "target machine actively refused it" on startup, resolve the instance's dynamic TCP port (`Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL*.<INSTANCE>\MSSQLServer\SuperSocketNetLib\Tcp\IPAll'`) and use that instead.
+
+`ZEWVRON_RUST_DATABASE_URL` needs `TrustServerCertificate=true` for a dev SQL Server using a self-signed certificate, or `tiberius` fails with "certificate chain... terminated in a root certificate which is not trusted". `Encrypt=false` does **not** avoid this — the SQL Server login packet is always TLS-encrypted regardless of `Encrypt`, so `TrustServerCertificate=true` is required either way for the login handshake to succeed against a self-signed dev cert.
 
 - Binds `127.0.0.1:7001` by default (loopback-only — deliberate, since there's no auth layer; don't default to `0.0.0.0`).
 - Env vars (no hardcoded fallback except bind address — all of these must be set explicitly or the service refuses to start): `ZEWVRON_RUST_BIND` (default `127.0.0.1:7001`), `ZEWVRON_RUST_DATABASE_URL` (ADO-style SQL Server connection string, **required**, no default), `ZEWVRON_RUST_DB_POOL_SIZE` (default `4`), `ZEWVRON_RUST_CORS_ORIGINS` (comma-separated whitelist; debug builds fall back to `http://localhost:3000,http://localhost:5000`, release builds **require** it set — refuses to start with CORS wide open otherwise).
@@ -119,9 +121,11 @@ php artisan test --filter=TestName            # single test
 
 ### Rust service (`RustService/zewvron_rustService/`)
 
+A `.env` file in this directory is **not loaded** by the service — these must be real environment variables in the shell session that runs `cargo`:
+
 ```bash
 cd RustService/zewvron_rustService
-$env:ZEWVRON_RUST_DATABASE_URL = "Server=...;Database=techstore1;..."   # required, no default
+$env:ZEWVRON_RUST_DATABASE_URL = "Server=...;Database=techstore1;...;TrustServerCertificate=true"   # required, no default
 $env:ZEWVRON_RUST_CORS_ORIGINS = "http://localhost:3000,http://localhost:5000"  # required in release builds
 cargo run          # :7001, loopback only by default
 cargo build --release
