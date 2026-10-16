@@ -64,7 +64,7 @@ namespace Zewvron.Repository.EFCore
                     p.Name.ToLower().Contains(keyword) ||
                     (p.Description != null && p.Description.ToLower().Contains(keyword)) ||
                     (p.Brand != null && p.Brand.ToLower().Contains(keyword)) ||
-                    (p.Sku != null && p.Sku.ToLower().Contains(keyword)));
+                    p.Variants.Any(v => v.Sku != null && v.Sku.ToLower().Contains(keyword)));
             }
 
             if (search.CategoryIds != null && search.CategoryIds.Count > 0)
@@ -93,11 +93,11 @@ namespace Zewvron.Repository.EFCore
                 query = query.Where(p => p.Brand != null && p.Brand.ToLower() == brand);
             }
 
-            if (search.MinPrice.HasValue) query = query.Where(p => p.Price >= search.MinPrice.Value);
-            if (search.MaxPrice.HasValue) query = query.Where(p => p.Price <= search.MaxPrice.Value);
+            if (search.MinPrice.HasValue) query = query.Where(p => (p.BasePrice ?? p.MinPrice ?? 0) >= search.MinPrice.Value);
+            if (search.MaxPrice.HasValue) query = query.Where(p => (p.BasePrice ?? p.MinPrice ?? 0) <= search.MaxPrice.Value);
             if (search.InStock == true)
             {
-                query = query.Where(p => p.Stock > 0 || p.Variants.Any(v => v.IsActive && v.Stock > 0));
+                query = query.Where(p => (p.TotalStock ?? 0) > 0 || p.Variants.Any(v => v.IsActive && v.Stock > 0));
             }
             if (search.IsFeatured.HasValue) query = query.Where(p => p.IsFeatured == search.IsFeatured.Value);
             if (search.IsBestSeller.HasValue) query = query.Where(p => p.IsBestSeller == search.IsBestSeller.Value);
@@ -108,8 +108,8 @@ namespace Zewvron.Repository.EFCore
 
             query = (search.SortBy ?? string.Empty).ToLower() switch
             {
-                "priceasc" or "price_asc" => query.OrderBy(p => p.Price),
-                "pricedesc" or "price_desc" => query.OrderByDescending(p => p.Price),
+                "priceasc" or "price_asc" => query.OrderBy(p => p.BasePrice ?? p.MinPrice ?? 0),
+                "pricedesc" or "price_desc" => query.OrderByDescending(p => p.BasePrice ?? p.MinPrice ?? 0),
                 "bestseller" or "best_seller" => query.OrderByDescending(p => p.IsBestSeller).ThenByDescending(p => p.Id),
                 "newest" => query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
                 _ => query.OrderByDescending(p => p.Id)
@@ -183,9 +183,9 @@ namespace Zewvron.Repository.EFCore
         public async Task<int> DecrementStockAsync(int productId, int quantity, int version)
         {
             return await _context.Products
-                .Where(p => p.Id == productId && p.Stock >= quantity)
+                .Where(p => p.Id == productId && (p.TotalStock ?? 0) >= quantity)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(p => p.Stock, p => p.Stock - quantity)
+                    .SetProperty(p => p.TotalStock, p => (p.TotalStock ?? 0) - quantity)
                     .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
         }
 
@@ -194,7 +194,7 @@ namespace Zewvron.Repository.EFCore
             return await _context.Products
                 .Where(p => p.Id == productId)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(p => p.Stock, p => p.Stock + quantity)
+                    .SetProperty(p => p.TotalStock, p => (p.TotalStock ?? 0) + quantity)
                     .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
         }
     }

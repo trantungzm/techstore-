@@ -145,7 +145,6 @@ namespace Zewvron.Services
 
             var now = DateTime.UtcNow;
             var details = new List<OrderDetail>();
-            var productsToUpdate = new List<Product>();
             decimal subtotal = 0;
 
             foreach (var item in dto.Items)
@@ -194,9 +193,6 @@ namespace Zewvron.Services
                     // Refresh product to get updated version
                     product = await _productRepository.GetByIdAsync(product.Id);
                 }
-
-                product.UpdatedAt = now;
-                productsToUpdate.Add(product);
 
                 var unitPrice = variant?.Price ?? product.BasePrice ?? product.MinPrice ?? 0;
                 var totalPrice = unitPrice * item.Quantity;
@@ -280,11 +276,6 @@ namespace Zewvron.Services
                 shippingDiscount = couponValidation.ShippingDiscount;
             }
             var totalAmount = Math.Max(0, subtotal - productDiscount + shippingFee - shippingDiscount);
-
-            foreach (var product in productsToUpdate)
-            {
-                await _productRepository.UpdateAsync(product);
-            }
 
             var order = new Order
             {
@@ -719,9 +710,6 @@ namespace Zewvron.Services
                 }
                 detail.SerialOrImei = null;
                 await _orderDetailRepository.UpdateAsync(detail);
-
-                product.UpdatedAt = now;
-                await _productRepository.UpdateAsync(product);
             }
         }
 
